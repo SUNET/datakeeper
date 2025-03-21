@@ -30,6 +30,9 @@ TODO.md
 deployment.md
 tests.v1.md
 tests.v2.cl.md
+fastapi.server.md
+temp/
+
 
 # Configuration files
 config.yaml
