@@ -42,16 +42,11 @@ The **Data Reduction Policy** defines strategies to manage and reduce the volume
 
 ## Development Dependencies
 
-To manage development dependencies, use the following:
-
 ```bash
 poetry add pytest nox black mypy --group dev
 ```
-
-These dependencies include:
 
 - **pytest**: For running tests.
 - **nox**: For automating testing and other development tasks.
 - **black**: For code formatting.
 - **mypy**: For static type checking.
-
