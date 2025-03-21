@@ -1,0 +1,71 @@
+# Python bytecode files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders
+venv/
+env/
+ENV/
+.venv/
+.python/
+
+# Distribution / packaging
+*.egg
+*.egg-info/
+dist/
+build/
+pip-wheel-metadata/
+
+# PyInstaller
+#  PyInstaller specific files
+*.manifest
+*.spec
+*.conf
+
+# Logs and temporary files
+logs/
+*.log
+TODO.md
+
+# Configuration files
+config.yaml
+
+# Data and subfolders
+data/
+*.sqlite
+
+# IDE/editor folders
+.vscode/
+.idea/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Coverage reports
+.coverage
+coverage.xml
+*.cover
+
+# MyPy
+.mypy_cache/
+
+# Pytest
+.cache/
+
+# Sphinx documentation
+docs/_build/
+build/
+
+# Python wheel
+*.whl
+
+# PDM (Python Development Master)
+.pdm/
+
+# Poetry
+.poetry/
+
+# Miscellaneous
+.DS_Store
+Thumbs.db

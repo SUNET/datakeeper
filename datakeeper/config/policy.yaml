@@ -1,0 +1,99 @@
+# policy-manager.yaml
+apiVersion: v1
+kind: PolicyManager
+metadata:
+  name: sensor-data-policy-manager
+  version: 1.0.0
+  description: "Policy manager for scientific sensor array data stored in HDF5 format"
+
+# Global settings for the policy manager
+settings:
+  log_level: "info"
+  enable_audit: true
+  audit_retention: 90 # days
+  policy_evaluation_interval: 60 # seconds
+
+# Define policy templates that can be referenced
+policy_templates:
+- name: "standard-retention"
+  description: "Standard retention policy with automatic deletion"
+  type: "retention"
+  spec: &standard_retention
+    retention_time: 30 # days
+    warning_time: 7 # days before deletion, notification is sent
+    strategy: "none" # no reduction before deletion
+
+# Define the actual policies
+policies:
+- name: "automatic-deletion"
+  description: "Automatically delete data after specified retention period"
+  enabled: true
+  selector:
+    data_type: [ "csv" ]
+    tags:
+    - "sensor-array"
+    paths:
+    - "/home/benedith/Desktop/tests/datasentry/src/data/csv"
+  triggers:
+  - type: on-demand
+    spec:
+      api: /collect/data
+  - type: schedule
+    spec:
+      type: cron
+      cron: "*/2 * * * *" # Run at 2 AM daily
+  actions:
+  - type: "retention"
+    spec:
+      <<: *standard_retention
+      operations: [ "data-reduction" ]
+      time_unit: "minute" # [second, minute, hour, day]
+      retention_time: 2
+      warning_time: 10
+      strategy: "default" # delete without reduction
+      exceptions:
+      - condition: "metadata.priority == 'high'"
+        retention_time: 365 # days
+      - condition: "metadata.tagged == 'preserve'"
+        retention_time: -1 # never delete
+
+- name: "sampling-reduction"
+  description: "Reduce sampling rate in time or space"
+  enabled: true
+  selector:
+    data_type: [ "hdf5" ]
+    tags:
+    - "sensor-array"
+    - "high-frequency"
+    paths:
+    - "/data/sensor_a/"
+    - "/data/sensor_b/"
+  triggers:
+  - type: schedule
+    spec:
+      type: cron
+      cron: "* 2 * * * *" # Run at 2 AM daily
+  - condition: "storage.utilization > 80%"
+  actions:
+  - type: "transform"
+    spec:
+      operations: [ "downsample" ]
+      preserve_original: false # replace original
+      methods:
+      - dimension: "temporal"
+        algorithm: "average"
+        factor: 4 # Every 4 samples become 1
+        apply_to_channels: "all"
+      - dimension: "spatial"
+        algorithm: "sum"
+        factor: 2 # Every 2 channels are summed
+        apply_to_channels: "metadata.reducible_channels"
+
+# * * * * * command_to_execute
+# - - - - -
+# | | | | |  
+# | | | | +---- Day of the week   (0 - 7) (Sunday = 0 or 7)  
+# | | | +------ Month            (1 - 12)  
+# | | +-------- Day of the month  (1 - 31)  
+# | +---------- Hour             (0 - 23)  
+# +------------ Minute           (0 - 59)
