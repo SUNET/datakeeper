@@ -27,6 +27,9 @@ pip-wheel-metadata/
 logs/
 *.log
 TODO.md
+deployment.md
+tests.v1.md
+tests.v2.cl.md
 
 # Configuration files
 config.yaml
