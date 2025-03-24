@@ -3,10 +3,10 @@ import yaml
 import json
 import uuid
 from typing import List
-from policy_system.plugin_registry import PluginRegistry
-from mixins.logger import LoggerMixin
-from policy_system.plugin_registry import Policy
-from database.db import Database
+from datakeeper.policy_system.plugin_registry import PluginRegistry
+from datakeeper.mixins.logger import LoggerMixin
+from datakeeper.policy_system.plugin_registry import Policy
+from datakeeper.database.db import Database
         
 
 class PolicyStore(LoggerMixin):
@@ -27,6 +27,11 @@ class PolicyStore(LoggerMixin):
             self.log_info(f"Loading plugins from {self.plugin_dir}")
             PluginRegistry.load_plugins(self.plugin_dir)
             
+            print("PluginRegistry")
+            print("_operations=>", PluginRegistry._operations)
+            print("_strategies=>", PluginRegistry._strategies)
+            print("_policy_types=>", PluginRegistry._policy_types)
+    
             # Load policy configuration
             self.load()
 

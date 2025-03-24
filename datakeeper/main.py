@@ -2,10 +2,10 @@ import os
 import time
 import logging
 import threading
-from database.db import Database
-from policy_store import PolicyStore
-from mixins.logger import LoggerMixin
-from job_scheduler import JobScheduler
+from datakeeper.database.db import Database
+from datakeeper.policy_store import PolicyStore
+from datakeeper.mixins.logger import LoggerMixin
+from datakeeper.job_scheduler import JobScheduler
 
 
 class PolicyManager(LoggerMixin):

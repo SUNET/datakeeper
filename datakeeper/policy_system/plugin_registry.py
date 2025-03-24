@@ -3,7 +3,7 @@ import glob
 import importlib.util
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Type
-from mixins.logger import LoggerMixin
+from datakeeper.mixins.logger import LoggerMixin
 
 
 class Operation(ABC, LoggerMixin):

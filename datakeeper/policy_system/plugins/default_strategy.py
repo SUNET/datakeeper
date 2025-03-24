@@ -1,6 +1,6 @@
 
 from typing import Dict, Any
-from policy_system.plugin_registry import Operation, PluginRegistry, Strategy
+from datakeeper.policy_system.plugin_registry import Operation, PluginRegistry, Strategy
 
 @PluginRegistry.register_strategy
 class DefaultStrategy(Strategy):

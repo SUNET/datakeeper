@@ -50,3 +50,9 @@ poetry add pytest nox black mypy --group dev
 - **nox**: For automating testing and other development tasks.
 - **black**: For code formatting.
 - **mypy**: For static type checking.
+
+## pytest
+
+```python
+pytest tests/ --verbose -s
+```

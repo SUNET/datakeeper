@@ -5,8 +5,8 @@ from enum import Enum
 from typing import List
 from typing import Dict, Any
 from datetime import datetime
-from policy_system.plugin_registry import Operation, PluginRegistry
-from database.db import Database
+from datakeeper.database.db import Database
+from datakeeper.policy_system.plugin_registry import Operation, PluginRegistry
 
 
 class TimeUnit(str, Enum):

@@ -33,7 +33,7 @@ policies:
     tags:
     - "sensor-array"
     paths:
-    - "/home/benedith/Desktop/tests/datasentry/src/data/csv"
+    - "/home/benedith/Desktop/tests/datasentry/datakeeper/datakeeper/data/csv"
   triggers:
   - type: on-demand
     spec:

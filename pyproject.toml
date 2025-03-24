@@ -7,10 +7,14 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
+pyyaml = "^6.0.2"
+apscheduler = "^3.11.0"
+pytest = "^8.3.5"
+pytest-cov = "^6.0.0"
+pytest-mock = "^3.14.0"
 
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.5"
 nox = "^2025.2.9"
 black = "^25.1.0"
 mypy = "^1.15.0"

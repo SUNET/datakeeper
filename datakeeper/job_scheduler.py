@@ -3,10 +3,10 @@ import time
 import signal
 import threading
 from typing import Dict
-from database.db import Database
-from policy_store import PolicyStore
-from mixins.logger import LoggerMixin
-from policy_system.plugin_registry import Policy
+from datakeeper.database.db import Database
+from datakeeper.policy_store import PolicyStore
+from datakeeper.mixins.logger import LoggerMixin
+from datakeeper.policy_system.plugin_registry import Policy
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -98,7 +98,7 @@ class JobScheduler(LoggerMixin):
         for policy, trigger in scheduled_policies:
             trigger_spec = trigger.get("spec", {})
             self.log_info(f"policy=>{policy}")
-            self.log_info(f"schedule_type=>{trigger_spec.get("type")}")
+            self.log_info(f"schedule_type=>{trigger_spec.get('type')}")
             self.log_info(f"trigger_spec=>{trigger_spec}")
             job_id = self._schedule_policy_execution(policy, trigger_spec)
             if job_id:

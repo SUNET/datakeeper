@@ -2,7 +2,7 @@ import os
 import json
 import sqlite3
 from typing import Dict
-from mixins.logger import LoggerMixin
+from datakeeper.mixins.logger import LoggerMixin
 # TODO: check database changes !!!!
 
 

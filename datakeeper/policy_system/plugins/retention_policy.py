@@ -1,8 +1,8 @@
 import json
 import uuid
 from typing import List, Dict, Any
-from policy_system.plugin_registry import PluginRegistry, Policy
-from database.db import Database
+from datakeeper.policy_system.plugin_registry import PluginRegistry, Policy
+from datakeeper.database.db import Database
 
 @PluginRegistry.register_policy_type
 class RetentionPolicy(Policy):
