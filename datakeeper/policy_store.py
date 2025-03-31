@@ -15,8 +15,8 @@ class PolicyStore(LoggerMixin):
     def __init__(self, db: Database, policy_path: str=None, plugin_dir=None, log_file="policy_store.log"):
         
         super().__init__(log_file)
-        self.policy_path = policy_path or os.path.expanduser("policy.yml")
-        self.plugin_dir = plugin_dir or os.path.join(os.path.dirname(__file__), "policy_system", "plugins")
+        self.policy_path=policy_path or os.path.join(os.path.dirname(__file__), "config", "policy.yaml")
+        self.plugin_dir=plugin_dir or os.path.join(os.path.dirname(__file__), "policy_system", "plugins")
         self.policy_config = None
         self.policies: List[Policy] = []
         self.settings = None

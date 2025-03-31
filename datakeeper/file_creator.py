@@ -3,9 +3,9 @@ import time
 import uuid
 
 
-def create_files():
-    current_dir = os.path.dirname(__file__)
-    directory = os.path.join(current_dir, "data", "csv")
+def create_files(current_dir = None):
+    current_dir = current_dir or os.path.dirname(__file__) 
+    directory = os.path.join(current_dir, "csv")
     # parent_dir = os.path.dirname(current_dir)
     # Ensure the directory exists
     os.makedirs(directory, exist_ok=True)
@@ -24,7 +24,7 @@ def create_files():
 def main():
     while True:
         print("creating files...")
-        create_files()
+        create_files("/tmp/datakeeper-data")
         print("Done!")
         print("sleeping...")
         time.sleep(60)

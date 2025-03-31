@@ -1,18 +1,14 @@
 import os
-import json
 import sqlite3
-from typing import Dict
+from pathlib import Path
+from typing import Dict, Optional
 from datakeeper.mixins.logger import LoggerMixin
+from datakeeper.settings import DataKeeperSettings
 # TODO: check database changes !!!!
 
 
 class Database(LoggerMixin):
-    def __init__(
-        self,
-        db_name: str = "database.sqlite",
-        init_file_path: str = None,
-        log_file: str = "database.log",
-    ):
+    def __init__(self, db_path: str, init_file_path: str=None, log_file: str = "database.log"):
         """Init
 
         Args:
@@ -21,11 +17,13 @@ class Database(LoggerMixin):
             log_file (str, optional): log file name
         """
         super().__init__(log_file)
-        self.db_path = os.path.join(os.path.dirname(__file__), db_name)
-        self.init_path = init_file_path or os.path.join(
-            os.path.dirname(__file__), "init.sql"
-        )
+        
+        # Set db_path and init_file_path using settings or defaults.
+        self.db_path = db_path if db_path else os.path.join(os.path.dirname(__file__), "database.sqlite") 
+        self.init_path = init_file_path if init_file_path else os.path.join(os.path.dirname(__file__), "init.sql")
+        
         self._init_db()
+
 
     def _init_db(self):
         self.init_sql = None

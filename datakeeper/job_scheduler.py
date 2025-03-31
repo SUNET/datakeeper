@@ -17,7 +17,7 @@ from apscheduler.events import EVENT_JOB_ERROR, EVENT_JOB_EXECUTED
 class JobScheduler(LoggerMixin):
     """Scheduler for policy jobs that runs in the background."""
     
-    def __init__(self,  db: Database, policy_store: PolicyStore, log_file: str="policy_store.log"):
+    def __init__(self,  db: Database, policy_store: PolicyStore, log_file: str="job_scheduler.log"):
         # Set up logging
         super().__init__(log_file)
         

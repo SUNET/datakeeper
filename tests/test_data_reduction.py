@@ -4,142 +4,132 @@ import glob
 import pytest
 import random
 import tempfile
-from enum import Enum
 from functools import partial
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.schedulers.background import BackgroundScheduler
-from datakeeper.policy_system.plugins.data_reduction_operation import delete_files_by_extension, calculate_file_age
-
-class TimeUnit(str, Enum):
-    SECOND = "second"
-    MINUTE = "minute"
-    HOUR = "hour"
-    DAY = "day"
-
-
-conversion_factors = {
-    TimeUnit.SECOND: 1,
-    TimeUnit.MINUTE: 60,
-    TimeUnit.HOUR: 60 * 60,
-    TimeUnit.DAY: 60 * 60 * 24,
-}
-
-def _create_files(folder_path: str = None, dir_name: str = "data", nfiles: int = 6, retention_time: int =  7, time_unit: TimeUnit = TimeUnit.DAY):
-
-    folder_path = folder_path if folder_path else os.path.dirname(__file__) 
-    directory = os.path.join(folder_path, dir_name)
-    print("directory=>", directory)
-    execute_policy =  partial(delete_files_by_extension, directory,"csv", retention_time, time_unit, True, False)
-
-    # Ensure the directory exists
-    age_array = [retention_time - 1, retention_time, retention_time + 1]
-    if retention_time < 1:
-        age_array = [0.5, 1, 2]
-    os.makedirs(directory, exist_ok=True)
-    files_created = []
-    for index in range(nfiles):
-        full_path = os.path.join(directory, f"data-{index}.csv")
-        print(index, "->", full_path, "age->", age_array[index % len(age_array)])
-        try:
-            with open(file=full_path, mode="w") as file:
-                file.write("x, y, labels\n")
-                file.write("44, 60, paris\n")
-                file.write("56, 88, london\n")
-                file.write("94, 24, lisbon\n")
-
-            # set the target timestamp (e.g., #retention_time #time_unit ago, 7 days ago)
-            target_time = time.time() - (
-                age_array[index % len(age_array)] * conversion_factors[time_unit]
-            )  # Convert time_unit to seconds
-            # Set the access and modification times
-            os.utime(full_path, (target_time, target_time))
-
-            files_created.append(full_path)
-
-        except (PermissionError, OSError) as e:
-            print(f"Failed to create file {full_path}: {str(e)}")
-
-    return files_created, execute_policy, retention_time, directory
-
-@pytest.fixture
-def temp_folder():
-    """
-    Fixture to create a temporary folder for testing.
-    TODO: use this instead of creating data folder directly in create_files() fixture
-    """
-    with tempfile.TemporaryDirectory() as folder:
-        print("folder=", folder)
-        yield folder
-
-@pytest.fixture
-def create_files(request):
-    """Example usage
-
-        @pytest.mark.parametrize("create_files", [{"time_unit": TimeUnit.HOUR}], indirect=True)
-        class TestDataReductionPolicy:
-            def test_files_created(self, create_files):
-    Args:
-        request (_type_): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    # Default values
-    params = {
-        "dir_name": "data",
-        "nfiles": 6,
-        "retention_time": 7,
-        "file_type": "csv",
-        "time_unit": TimeUnit.DAY,
-    }
-
-    # Override with test-specific parameters
-    if hasattr(request, "param"):
-        params.update(request.param)
-
-    dir_name = params["dir_name"]
-    nfiles = params["nfiles"]
-    retention_time = params["retention_time"]
-    time_unit = params["time_unit"]
-    
-    return  _create_files(dir_name = dir_name, nfiles = nfiles, retention_time =  retention_time, time_unit = time_unit)
-    
-
+from datakeeper.policy_system.plugins.data_reduction_operation import (
+    delete_files_by_extension, 
+    calculate_file_age, 
+    TimeUnit
+)
 
 class TestDataReductionPolicy:
-    def test_files_created(self):
+    @pytest.fixture
+    def create_test_files(self):
+        """
+        Fixture to create test files with controlled aging for consistent testing.
+        
+        Returns:
+            tuple: Contains directory path, created files, and execute policy function
+        """
+        def _create_files(
+            folder_path: str = None,
+            dir_name: str = "data",
+            file_count=6, 
+            retention_time=7, 
+            time_unit=TimeUnit.DAY, 
+            file_extension='csv'
+        ):
+            folder_path = folder_path if folder_path else os.path.dirname(__file__) 
+            directory = os.path.join(folder_path, dir_name)
+            print("directory=>", directory)
+            # Ensure the directory exists
+            os.makedirs(directory, exist_ok=True)
+            
+            # Create files with varied ages
+            age_array = [
+                retention_time - 1,  # Just under retention
+                retention_time,      # Exactly at retention
+                retention_time + 1   # Just over retention
+            ]
+            
+            if retention_time < 1:
+                age_array = [0.5, 1, 2]
+                
+            files_created = []
+            conversion_factors = {
+                TimeUnit.SECOND: 1,
+                TimeUnit.MINUTE: 60,
+                TimeUnit.HOUR: 60 * 60,
+                TimeUnit.DAY: 60 * 60 * 24,
+            }
+            
+            for index in range(file_count):
+                filename = f"data-{index}.{file_extension}"
+                filepath = os.path.join(directory, filename)
+                print(index, "->", filepath, "age->", age_array[index % len(age_array)])
+                # Create file with sample content
+                with open(filepath, 'w') as f:
+                    f.write("x, y, labels\n")
+                    f.write("44, 60, paris\n")
+                
+                # Set file age
+                target_time = time.time() - (
+                    age_array[index % len(age_array)] * conversion_factors[time_unit]
+                )
+                os.utime(filepath, (target_time, target_time))
+                
+                files_created.append(filepath)
+            
+            # Create partial function for file deletion policy
+            execute_policy =  partial(delete_files_by_extension, directory,file_extension, retention_time, time_unit, True, False)
+            
+            return directory, files_created, execute_policy
+        
+        return _create_files
+
+    def test_files_creation(self, create_test_files):
+        """
+        Test that files are correctly created with the specified parameters.
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Create a MagicMock for the DatabaseClient
-            files_created, _, _, _ = _create_files(folder_path=temp_dir,dir_name = "data", nfiles = 6, retention_time =  7, time_unit = TimeUnit.DAY)
-            n_files = len(files_created)
-            assert n_files == 6
+            directory, files_created, _ = create_test_files(
+                temp_dir, "data", file_count=6, retention_time=7, time_unit=TimeUnit.DAY
+            )
+            
+            assert len(files_created) == 6
             assert all(os.path.exists(file) for file in files_created)
 
-    def test_scheduler_triggers_reduction(self):
+    def test_file_deletion_policy(self, create_test_files):
+        """
+        Test that files older than retention time are deleted.
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
-            # Create a MagicMock for the DatabaseClient
-            files_created, _, _, _ = _create_files(folder_path=temp_dir,dir_name = "data", nfiles = 6, retention_time =  7, time_unit = TimeUnit.DAY)
+            directory, files_created, execute_policy = create_test_files(
+                temp_dir,"data", file_count=6, retention_time=7, time_unit=TimeUnit.DAY
+            )
             
-            scheduler = MagicMock(BackgroundScheduler)
-            scheduler.add_job = MagicMock()
+            # Execute deletion policy
+            execute_policy()
+            
+            # Check remaining files
+            remaining_files = glob.glob(os.path.join(directory, "*.csv"))
+            assert len(remaining_files) <= len(files_created)
+            
+            # Verify each remaining file is within retention time
+            for file_path in remaining_files:
+                file_age = calculate_file_age(
+                    os.stat(file_path).st_mtime, 
+                    time.time(), 
+                    TimeUnit.DAY
+                )
+                assert file_age < 7, f"File {file_path} exceeds retention time"
 
-            # Simulate job addition
-            scheduler.add_job(delete_files_by_extension, 'interval', hours=1, args=["/path/to/folder"])
 
-            # Simulate job execution
-            scheduler.add_job.return_value = True
-
-            scheduler.add_job(delete_files_by_extension, 'interval', hours=1)
-            assert scheduler.add_job.called  # Verify the job was added
-
-    def test_integration_with_scheduler(self):
+    def test_integration_with_scheduler(self, create_test_files):
+        """
+        Test integration with APScheduler, mocking the scheduler to avoid actual scheduling.
+        """
         with tempfile.TemporaryDirectory() as temp_dir:
-             # Simulate file creation and policy
-            # files_created, retention_time, execute_policy = _create_files(folder_path=temp_dir,dir_name = "data", nfiles = 6, retention_time =  7, time_unit = TimeUnit.DAY)
+            # Setup mock scheduler and policy
+            retention_time = 6
             time_unit = TimeUnit.DAY
-            ffiles_created, execute_policy, retention_time, directory = _create_files(folder_path=temp_dir, dir_name = "data", nfiles = 6, retention_time =  7, time_unit = time_unit)
             
+
+            directory, files_created, execute_policy = create_test_files(
+                temp_dir,"datax", file_count=6, retention_time=retention_time, time_unit=time_unit
+            )
             # Schedule and run
             scheduler = BackgroundScheduler()
             trigger = CronTrigger.from_crontab("*/1 * * * *")
@@ -178,4 +168,4 @@ class TestDataReductionPolicy:
                 file_age = calculate_file_age(os.stat(file_path).st_mtime, time.time(), time_unit)
                 print("file:", file_path, "age->", file_age)
                 assert file_age < retention_time
-            
+                

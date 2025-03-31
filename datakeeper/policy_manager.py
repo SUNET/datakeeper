@@ -94,31 +94,3 @@ class PolicyManager(LoggerMixin):
         return 0
 
 
-def main():
-    """Main entry point for the application."""
-    print("MAIN:SIMPLE")
-    datastore_db = Database()
-
-    # Initialize the policy store
-    policy_store = PolicyStore(
-        db=datastore_db,
-        policy_path=os.getenv("POLICY_PATH", "config/policy.yaml"),
-        plugin_dir=os.getenv("PLUGIN_DIR", None),
-        log_file=os.getenv("POLICY_LOG", "policy_store.log"),
-    )
-    # Initialize the job scheduler
-    job_scheduler = JobScheduler(
-        db=datastore_db,
-        policy_store=policy_store,
-        log_file=os.getenv("SCHEDULER_LOG", "job_scheduler.log"),
-    )
-
-    policy_mgmt = PolicyManager(
-        policy_store=policy_store, job_scheduler=job_scheduler, database=datastore_db
-    )
-    # policy_mgmt.start_simple()
-    policy_mgmt.start()
-
-
-if __name__ == "__main__":
-    exit(main())

@@ -4,9 +4,15 @@ import logging
 class LoggerMixin:
     def __init__(self, log_file="app.log"):
         self.logger = logging.getLogger(self.__class__.__name__)
-        current_dir = os.path.dirname(__file__)
-        parent_dir = os.path.dirname(current_dir)
-        self.log_path = os.path.join(parent_dir, "logs", log_file)
+        parent_dir = os.path.dirname(os.path.dirname(__file__))
+        self.log_directory = os.getenv("LOG_DIRECTORY", parent_dir)
+        log_path = os.path.join(self.log_directory, "logs")
+        # Make sure that directory does exist
+        os.makedirs(log_path, exist_ok=True)
+        
+        
+        self.log_path = os.path.join(log_path, log_file)
+        
 
         # Configure logger if it hasn't been configured yet
         if not self.logger.handlers:

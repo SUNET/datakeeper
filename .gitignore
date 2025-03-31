@@ -32,6 +32,11 @@ tests.v1.md
 tests.v2.cl.md
 fastapi.server.md
 temp/
+nuitka-build
+.env
+/.env
+./.env
+env
 
 
 # Configuration files
