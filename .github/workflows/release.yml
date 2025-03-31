@@ -1,0 +1,45 @@
+name: Release Datakeeper
+
+on:
+  push:
+    tags:
+    - "v*.*.*" # Trigger on version tags like v1.0.0
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install Nuitka and dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install nuitka
+
+    - name: Build binary with Nuitka
+      run: |
+        nuitka --onefile --standalone --python-flag=no_site \
+          --output-filename=datakeeper --output-dir=nuitka-build \
+          --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
+          --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
+          --include-data-file=VERSION=VERSION \
+          main.py
+
+    - name: Upload binary to GitHub Releases
+      uses: softprops/action-gh-release@v2
+      with:
+        files: nuitka-build/datakeeper
+        body: "🚀 New Nuitka-compiled release of Datakeeper!"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
