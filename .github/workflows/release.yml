@@ -26,10 +26,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install nuitka
+        python -m pip install pyyaml==6.0.2
+        python -m pip install apscheduler==3.11.0
+        python -m pip install click==8.1.8
 
     - name: Build binary with Nuitka
       run: |
         nuitka --onefile --standalone --python-flag=no_site \
+          --include-package=click \
+          --include-package=pyyaml \
+          --include-package=apscheduler \
           --output-filename=datakeeper --output-dir=nuitka-build \
           --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
           --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \

@@ -93,3 +93,10 @@ sudo systemctl enable datakeeper
 sudo systemctl start datakeeper
 sudo systemctl status datakeeper
 ```
+
+
+## Build
+
+```sh
+docker compose up --build
+```

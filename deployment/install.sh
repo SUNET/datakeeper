@@ -1,4 +1,15 @@
 #!/bin/bash
+: <<'COMMENT'
+Usage:
+- Default (no build, use `./datakeeper`):
+  ./install.sh
+  
+- With build (use `./output/datakeeper`):
+  ./install.sh --with-build=true
+
+- Custom app name with build:
+  ./install.sh --app-name=myapp --with-build=true
+COMMENT
 
 set -e
 
@@ -11,39 +22,64 @@ cleanup_dir() {
     fi
 }
 
-# (1) Setup variables, config and default folders
-
-# Default application name
+# (1) Parse input arguments
 DEFAULT_APP_NAME="datakeeper"
-APP_NAME="${1:-$DEFAULT_APP_NAME}"
+APP_NAME="$DEFAULT_APP_NAME"
+WITH_BUILD=false
 
-# Define variables
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --app-name=*)
+            APP_NAME="${arg#*=}"
+            shift
+            ;;
+        --with-build=true)
+            WITH_BUILD=true
+            shift
+            ;;
+        --with-build=false)
+            WITH_BUILD=false
+            shift
+            ;;
+        *)
+            echo "Unknown option: $arg"
+            exit 1
+            ;;
+    esac
+done
+
+# Select binary path based on WITH_BUILD flag
+if [ "$WITH_BUILD" = true ]; then
+    BINARY_PATH="./output/${APP_NAME}"
+else
+    BINARY_PATH="./${APP_NAME}"
+fi
+
+# (2) Conditionally run Docker Compose build
+if [ "$WITH_BUILD" = true ]; then
+    echo "Building the binary using Docker Compose..."
+    docker compose up --build
+fi
+
+# (3) Setup variables, config, and default folders
 REPO_URL="https://github.com/SUNET/datakeeper.git"
 CLONE_DIR="/tmp/repository" # Temporary directory for cloning
 INSTALL_DIR="/usr/local/bin"
 SERVICE_FILE="/etc/systemd/system/${APP_NAME}.service"
 LOG_FILE="/opt/${APP_NAME}/logs/runtime/${APP_NAME}.log"
-BINARY_PATH="./${APP_NAME}" # Assuming the binary is in the current directory
 CONFIG_FILE="config.ini"
 
 echo "Installing ${APP_NAME} Service..."
 
-if [ -d "$CLONE_DIR" ]; then
-    echo "Removing existing repository clone..."
-    rm -rf "$CLONE_DIR"
-fi
-
-# Remove if exist
 cleanup_dir "/opt/${APP_NAME}"
-# Create directory
 mkdir -p /opt/${APP_NAME}/{database,plugins,logs/system,logs/runtime}
 
-# Remove existing clone directory if it exists
 cleanup_dir "$CLONE_DIR"
 
 echo "Cloning repository..."
 git clone --depth=1 "$REPO_URL" "$CLONE_DIR"
-echo "Copying file to destination..."
+echo "Copying files to destination..."
 
 sudo cp "$CLONE_DIR/datakeeper/database/init.sql" "/opt/${APP_NAME}/database/"
 sudo cp "$CLONE_DIR/datakeeper/config/policy.yaml" "/opt/${APP_NAME}/"
@@ -59,7 +95,7 @@ DB_PATH = /opt/${APP_NAME}/database/database.sqlite
 INIT_FILE_PATH = /opt/${APP_NAME}/database/init.sql
 EOF
 
-# (2) Installation
+# (4) Installation
 
 # Ensure the binary exists
 if [[ ! -f "$BINARY_PATH" ]]; then
@@ -106,13 +142,10 @@ echo "Cleaning up..."
 cleanup_dir "$CLONE_DIR"
 
 # Change permissions
-# sudo useradd -r -s /bin/false ${APP_NAME}
-# sudo chown -R ${APP_NAME}:${APP_NAME} /opt/${APP_NAME}/logs
 sudo chmod -R 775 /opt/${APP_NAME}/logs
 
 # Reload systemd, enable and start the service
 sudo systemctl daemon-reload
-# sudo systemctl stop "${APP_NAME}"
 sudo systemctl enable "${APP_NAME}"
 sudo systemctl start "${APP_NAME}"
 

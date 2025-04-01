@@ -37,6 +37,7 @@ nuitka-build
 /.env
 ./.env
 env
+deployment/output
 
 
 # Configuration files

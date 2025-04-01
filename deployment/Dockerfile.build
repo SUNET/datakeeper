@@ -1,0 +1,49 @@
+# Use Debian 10 (Buster) as the base image
+FROM debian:11 AS builder
+
+# Set environment variables to prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python, Nuitka, and build dependencies
+RUN apt-get update && apt-get install -y \
+    python3 python3-pip python3-dev python3-venv build-essential \
+    gcc g++ git curl \
+    libffi-dev libssl-dev patchelf
+
+# Install Poetry
+RUN python3 -m pip install --user pipx
+RUN python3 -m pipx ensurepath
+# Ensure pipx is in the global path
+RUN export PATH="$PATH:/root/.local/bin" && python3 -m pipx ensurepath --global
+RUN export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin" && python3 -m pipx ensurepath --global
+RUN python3 -m pipx install poetry
+
+# Install Nuitka
+RUN python3 -m pip install --no-cache-dir nuitka pyinstaller
+
+# Set working directory
+WORKDIR /app
+
+# Copy the Python script and other files into the container
+# Clone the repository
+RUN git clone --depth=1 https://github.com/SUNET/datakeeper.git .
+
+# Install dependencies with Poetry
+# RUN poetry install --no-root --no-dev
+RUN export PATH="$PATH:/root/.local/bin" && poetry install --no-root
+
+# Build the binary using Nuitka
+# RUN poetry run nuitka --onefile --standalone --python-flag=no_site \
+RUN nuitka --onefile --standalone --python-flag=no_site \
+    --output-filename=datakeeper --output-dir=nuitka-build \
+    --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
+    --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
+    --include-data-file=VERSION=VERSION \
+    main.py
+
+# Move the final binary to a known location
+# RUN mv nuitka-build/datakeeper /app/datakeeper
+RUN mkdir -p /app/dist
+RUN mv nuitka-build/datakeeper /app/dist/datakeeper
+# Default command to run the compiled executable
+CMD ["./dist/datakeeper"]

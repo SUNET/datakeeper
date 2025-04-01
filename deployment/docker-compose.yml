@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    volumes:
+      - ./output:/output
+    command: ["/bin/sh", "-c", "cp /app/dist/datakeeper /output/datakeeper"]
