@@ -34,10 +34,12 @@ jobs:
     - name: Install dependencies with Poetry
       run: |
         poetry install --no-root  # Install only runtime dependencies
+        poetry env info
+        poetry run pip list
 
     - name: Build binary with Nuitka
       run: |
-        poetry shell
+        eval $(poetry env activate)
         poetry run nuitka --onefile --standalone --python-flag=no_site \
           --include-package=click \
           --include-package=pyyaml \
