@@ -37,6 +37,7 @@ jobs:
 
     - name: Build binary with Nuitka
       run: |
+        poetry shell
         poetry run nuitka --onefile --standalone --python-flag=no_site \
           --include-package=click \
           --include-package=pyyaml \
