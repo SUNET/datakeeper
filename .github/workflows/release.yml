@@ -33,7 +33,7 @@ jobs:
 
     - name: Install dependencies with Poetry
       run: |
-        poetry install --no-dev  # Install only runtime dependencies
+        poetry install --no-root  # Install only runtime dependencies
 
     - name: Build binary with Nuitka
       run: |
