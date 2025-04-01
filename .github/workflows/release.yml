@@ -42,8 +42,8 @@ jobs:
         eval $(poetry env activate)
         poetry run nuitka --onefile --standalone --python-flag=no_site \
           --include-package=click \
-          --include-package=pyyaml \
-          --include-package=apscheduler \
+          --include-package=PyYAML \
+          --include-package=APScheduler \
           --output-filename=datakeeper --output-dir=nuitka-build \
           --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
           --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
