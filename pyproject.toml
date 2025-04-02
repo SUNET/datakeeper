@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "datakeeper"
-version = "0.1.2"
+version = "0.1.7"
 description = ""
 authors = ["Benedith Mulongo <benedith@sunet.se>"]
 readme = "README.md"

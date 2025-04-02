@@ -29,11 +29,12 @@ policies:
   description: "Automatically delete data after specified retention period"
   enabled: true
   selector:
-    data_type: [ "csv" ]
+    data_type: [ "csv", "hdf5" ]
     tags:
     - "sensor-array"
     paths:
-    - "/home/benedith/Desktop/tests/datasentry/datakeeper/datakeeper/data/csv"
+    - "/tmp/datakeeper-data"
+    - "/tmp/datakeeper-data-2"
   triggers:
   - type: on-demand
     spec:

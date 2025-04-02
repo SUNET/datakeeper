@@ -1,4 +1,3 @@
-# Use Debian 10 (Buster) as the base image
 FROM debian:11 AS builder
 
 # Set environment variables to prevent interactive prompts
@@ -11,12 +10,14 @@ RUN apt-get update && apt-get install -y \
     libffi-dev libssl-dev patchelf
 
 # Install Poetry
-RUN python3 -m pip install --user pipx
-RUN python3 -m pipx ensurepath
-# Ensure pipx is in the global path
-RUN export PATH="$PATH:/root/.local/bin" && python3 -m pipx ensurepath --global
-RUN export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin" && python3 -m pipx ensurepath --global
-RUN python3 -m pipx install poetry
+ENV POETRY_HOME=/opt/poetry
+RUN curl -sSL https://install.python-poetry.org | python3 - \
+    && ln -s /opt/poetry/bin/poetry /usr/local/bin/poetry
+#    && poetry config virtualenvs.create false
+
+# Set Poetry to create virtual environments inside the project
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+
 
 # Install Nuitka
 RUN python3 -m pip install --no-cache-dir nuitka pyinstaller
@@ -24,17 +25,20 @@ RUN python3 -m pip install --no-cache-dir nuitka pyinstaller
 # Set working directory
 WORKDIR /app
 
-# Copy the Python script and other files into the container
 # Clone the repository
 RUN git clone --depth=1 https://github.com/SUNET/datakeeper.git .
 
 # Install dependencies with Poetry
-# RUN poetry install --no-root --no-dev
-RUN export PATH="$PATH:/root/.local/bin" && poetry install --no-root
+RUN poetry install --no-interaction --no-ansi --no-root
+RUN poetry env info
+RUN poetry run pip list
+
+# Set the virtual environment path
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Build the binary using Nuitka
-# RUN poetry run nuitka --onefile --standalone --python-flag=no_site \
-RUN nuitka --onefile --standalone --python-flag=no_site \
+RUN poetry run nuitka --onefile --standalone --python-flag=no_site \
     --output-filename=datakeeper --output-dir=nuitka-build \
     --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
     --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
@@ -42,7 +46,6 @@ RUN nuitka --onefile --standalone --python-flag=no_site \
     main.py
 
 # Move the final binary to a known location
-# RUN mv nuitka-build/datakeeper /app/datakeeper
 RUN mkdir -p /app/dist
 RUN mv nuitka-build/datakeeper /app/dist/datakeeper
 # Default command to run the compiled executable

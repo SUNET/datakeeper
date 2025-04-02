@@ -40,6 +40,8 @@ The **Data Reduction Policy** defines strategies to manage and reduce the volume
 
 ---
 
+## Installation
+
 ## Development Dependencies
 
 ```bash
@@ -50,6 +52,14 @@ poetry add pytest nox black mypy --group dev
 - **nox**: For automating testing and other development tasks.
 - **black**: For code formatting.
 - **mypy**: For static type checking.
+
+
+```bash
+cd datakeeper
+poetry shell
+poetry install
+python main.py --help
+```
 
 ## pytest
 

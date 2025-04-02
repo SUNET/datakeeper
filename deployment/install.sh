@@ -53,6 +53,7 @@ done
 if [ "$WITH_BUILD" = true ]; then
     BINARY_PATH="./output/${APP_NAME}"
 else
+    wget https://github.com/SUNET/datakeeper/releases/download/v0.1.7/datakeeper
     BINARY_PATH="./${APP_NAME}"
 fi
 
