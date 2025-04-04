@@ -7,6 +7,7 @@ from datakeeper.policy_store import PolicyStore
 from datakeeper.job_scheduler import JobScheduler
 from datakeeper.settings import DataKeeperSettings
 from datakeeper.policy_manager import PolicyManager
+from datakeeper.data_generator import DataGenerator
 from importlib.metadata import PackageNotFoundError, version as importlib_version
 
 @click.group(invoke_without_command=True)
@@ -68,7 +69,35 @@ def schedule(config, verbose):
     policy_mgmt.start()
     
     
+@click.command()
+@click.option("--base-dir", required=False, default=None, help="Base directory for storing generated files.")
+@click.option("--random-age", is_flag=True, required=False, help="Generate files with random ages.")
+@click.option("--num-files", required=False, default=5, type=int, help="Number of files to generate.")
+@click.option("--create-dir", is_flag=True, required=False, help="Create the base directory if it does not exist.")
+@click.option(
+    "--format",
+    type=click.Choice(["csv", "hdf5"]),
+    required=True,
+    show_default=True,
+    help="Specify the output file format ('csv' or 'hdf5').",
+)
+@click.option("--sub-dir", required=False, default=None, help="Subdirectory within the base directory.")
+def generate(base_dir, random_age, num_files, create_dir, format, sub_dir):
+    """
+    Generate data files according to specified options.
+    """
+
+    data_generator = DataGenerator(
+        base_directory=base_dir,
+        random_age=random_age,
+        number_of_files=num_files,
+        create_dir=create_dir,
+    )
+    data_generator.generate(subdirectory=sub_dir, format=format)
+
+        
 cli.add_command(schedule)
+cli.add_command(generate)
 
 if __name__ == "__main__":
     # sys.exit(cli())

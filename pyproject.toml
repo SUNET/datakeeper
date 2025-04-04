@@ -11,6 +11,8 @@ pyyaml = "^6.0.2"
 apscheduler = "^3.11.0"
 click = "^8.1.8"
 nuitka = "^2.6.9"
+pandas = "^2.2.3"
+numpy = "2.0.2"
 
 
 [tool.poetry.group.dev.dependencies]
