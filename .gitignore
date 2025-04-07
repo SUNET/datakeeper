@@ -82,3 +82,5 @@ build/
 .DS_Store
 Thumbs.db
 datakeeper/data_saver.py
+datakeeper/hdf5_test.py
+datakeeper/sample_hdf5_data

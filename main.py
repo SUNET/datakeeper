@@ -70,7 +70,7 @@ def schedule(config, verbose):
     
     
 @click.command()
-@click.option("--base-dir", required=False, default=None, help="Base directory for storing generated files.")
+@click.option("--base-dir", required=True, default=None, help="Base directory for storing generated files.")
 @click.option("--random-age", is_flag=True, required=False, help="Generate files with random ages.")
 @click.option("--num-files", required=False, default=5, type=int, help="Number of files to generate.")
 @click.option("--create-dir", is_flag=True, required=False, help="Create the base directory if it does not exist.")
@@ -85,6 +85,8 @@ def schedule(config, verbose):
 def generate(base_dir, random_age, num_files, create_dir, format, sub_dir):
     """
     Generate data files according to specified options.
+    usage: 
+        python main.py generate --format csv --base-dir /home/benedith/Desktop/tests/datasentry/datakeeper/generated_data
     """
 
     data_generator = DataGenerator(
