@@ -1,11 +1,14 @@
 import os
 import uuid
 import time
+import h5py
 import random
 import string
+from multiprocessing import Process, JoinableQueue
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from functools import partial
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from datakeeper.mixins.logger import LoggerMixin
@@ -13,6 +16,19 @@ from datakeeper.policy_system.plugins.data_reduction_operation import (
     TimeUnit
 )
 
+
+def rec_pop(data, acc={}):
+    titles = list(data)
+    for t in titles:
+        curr_data = data[t]
+        if isinstance(curr_data, h5py._hl.dataset.Dataset):
+            acc[t] = curr_data[()]
+        elif isinstance(curr_data, h5py._hl.group.Group):
+            acc[t] = rec_pop(curr_data, {})
+        else:
+            print("Unkown type:::", type(curr_data))
+            return acc
+    return acc
 
 class DataGenerator(LoggerMixin):
     """
@@ -53,14 +69,9 @@ class DataGenerator(LoggerMixin):
             TimeUnit.HOUR: 60 * 60,
             TimeUnit.DAY: 60 * 60 * 24,
         }
-        
+
         if create_dir and not self.base_directory.exists():
             self.base_directory.mkdir(parents=True, exist_ok=True)
-            
-    def random_matrix(self, n_timestamps=150, n_channels=800, seed: int = None):
-        if seed is not None:
-            np.random.seed(seed)
-        return np.random.rand(n_timestamps, n_channels)
     
     def generate_random_dataframe(
         self,
@@ -160,44 +171,90 @@ class DataGenerator(LoggerMixin):
         # Call the appropriate save method
         save_method_name = self.SUPPORTED_FORMATS[format]
         save_method = getattr(self, save_method_name)
-        
+        queue = JoinableQueue()
+        PROCESSES_POOL_SIZE = min(self.number_of_files, 10)
         try:
             for index in range(self.number_of_files):
                 file_path = save_dir / f"{filename}-{index+1}.{format}"  
-                data = self.generate_random_dataframe(rows=16, cols=6)
-                save_method(data, file_path, **additional_params)
-                if self.random_age:
-                    time_unit = random.choice(list(TimeUnit))
-                    target_time = time.time() - (random.randint(15,60) * self.conversion_factors[time_unit])
-                    os.utime(file_path, (target_time, target_time))
-            self.logger.info(f"Successfully saved data to {file_path}")
+                queue.put(save_dir / f"{filename}-{index+1}.{format}"  )
+
+            processes = [
+                Process(target=partial(save_method, **additional_params), args=(queue,), daemon=True)
+                for _ in range(PROCESSES_POOL_SIZE)
+            ]
+
+            for p in processes:
+                p.start()
+            queue.join()
+            self.logger.info(f"Successfully saved data to {self.base_directory}")
             return str(file_path)
         except Exception as e:
-            self.logger.error(f"Error saving data to {file_path}: {e}")
+            self.logger.error(f"Error saving data to {self.base_directory}: {e}")
             raise
     
-    def _save_csv(self, data: pd.DataFrame, file_path: Path, **kwargs) -> None:
-        """Save data to CSV file."""
-        # Set sensible defaults if not provided
-        params = {
-            'index': kwargs.get('index', False),
-            'sep': kwargs.get('sep', ','),
-            'encoding': kwargs.get('encoding', 'utf-8')
-        }
-        data.to_csv(file_path, **params)
-
     
-    def _save_hdf5(self, data: pd.DataFrame, file_path: Path, **kwargs) -> None:
+    def set_random_age(self, file_path):
+        if self.random_age:
+            time_unit = random.choice(list(TimeUnit))
+            target_time = time.time() - (random.randint(15,60) * self.conversion_factors[time_unit])
+            os.utime(file_path, (target_time, target_time))
+            
+            
+    def _save_csv(self, queue: JoinableQueue, **kwargs) -> None:
+        while True:
+            file_path = queue.get()
+            try:
+                data = self.generate_random_dataframe(rows=16, cols=6)
+                """Save data to CSV file."""
+                # Set sensible defaults if not provided
+                params = {
+                    'index': kwargs.get('index', False),
+                    'sep': kwargs.get('sep', ','),
+                    'encoding': kwargs.get('encoding', 'utf-8')
+                }
+                data.to_csv(file_path, **params)
+                self.set_random_age(file_path)
+            except Exception as e:
+                print(f"Error creating file {file_path}: {e}")
+            finally:
+                queue.task_done()
+    
+    
+    
+    def _save_hdf5(self, queue: JoinableQueue, **kwargs) -> None:
         """Save data to HDF5 file."""
-        # Set sensible defaults if not provided
-        params = {
-            'key': kwargs.get('key', 'data'),
-            'mode': kwargs.get('mode', 'w'),
-            'complevel': kwargs.get('complevel', 9),
-            'complib': kwargs.get('complib', 'zlib')
-        }
-        data.to_hdf(file_path, **params)
-    
+        while True:
+            file_path = queue.get()
+            try:
+                # Create synthetic data for the main dataset
+                data = np.random.randint(-150, 150, size=(10417, 16000), dtype=np.int16)
+
+                # Create the HDF5 file
+                with h5py.File(file_path, "w") as f:
+                    # Create the datasets
+                    f.create_dataset("data", data=data)
+                    f.create_dataset("fileGenerator", data=np.bytes_("DASControl"))
+                    f.create_dataset("fileGeneratorSvnRev", data=np.uint32(2403011412))
+                    f.create_dataset("fileVersion", data=np.int32(8))
+
+                    # Create the groups
+                    f.create_group("acqSpec")
+                    f.create_group("cableSpec")
+                    f.create_group("demodSpec")
+                    f.create_group("header")
+                    f.create_group("instrumentOptions")
+                    f.create_group("monitoring")
+                    f.create_group("processingChain")
+                    f.create_group("sweepSpec")
+                    f.create_group("timing")
+                    f.create_group("versions")
+                    self.set_random_age(file_path)
+
+            except Exception as e:
+                print(f"Error creating file {file_path}: {e}")
+            finally:
+                queue.task_done()
+                
     def register_format(self, format_name: str, save_method: callable) -> None:
         """
         Register a new file format and its corresponding save method.
