@@ -5,15 +5,15 @@ from datakeeper.policy_system.plugin_registry import PluginRegistry, Policy
 from datakeeper.database.db import Database
 
 @PluginRegistry.register_policy_type
-class RetentionPolicy(Policy):
+class DownSamplerPolicy(Policy):
     """Policy for data retention and deletion."""
     
     def __init__(self, uniq_id:str, name: str, enabled: bool, triggers: List[Dict[str, Any]], 
                  selector: Dict[str, Any], spec: Dict[str, Any], db: Database = None):
         super().__init__(uniq_id, name, enabled, triggers, selector, spec.get('operations', []), spec.get('strategy', 'none'))
-        
-        self.retention_time = spec.get('retention_time', 30)  # Default 30 days
-        self.warning_time = spec.get('warning_time', 7)
+        self.policy_id = uniq_id
+        self.preserve_original = spec.get('preserve_original', False)
+        self.methods = spec.get('methods', [])
         self.strategy_name = spec.get('strategy', 'default')
         self.time_unit = spec.get('time_unit', 'day')
         self.operations = spec.get('operations', [])
@@ -24,13 +24,14 @@ class RetentionPolicy(Policy):
         self.schedule =  list(filter(lambda x: x['type']=='schedule', self.triggers))[0]
         self.scheduled_operations = []
         self.context = {
+            "policy_id": self.policy_id,
             "name": self.name,
             "data_type": self.data_type,
             "file_paths": self.paths,
             "tags": self.tags,
             "time_unit": self.time_unit, 
-            "retention_time": self.retention_time, 
-            "warning_time": self.warning_time,
+            "preserve_original": self.preserve_original, 
+            "methods": self.methods,
             "triggers": self.triggers,
             "exceptions": self.exceptions
         }
@@ -88,7 +89,7 @@ class RetentionPolicy(Policy):
                 return True
         
         # No exceptions matched, use the default retention period
-        self.context['retention_time'] = self.retention_time
+        # self.context['retention_time'] = self.retention_time
         return True
     
     def apply(self, context: Dict[str, Any]={}) -> Any:
@@ -97,14 +98,16 @@ class RetentionPolicy(Policy):
         # Get the strategy
         strategy_class = PluginRegistry.get_strategy(self.strategy_name)
         if not strategy_class:
-            print(f"Strategy '{self.strategy_name}' not found, using default 'none' strategy")
-            strategy_class = PluginRegistry.get_strategy('none')
+            print(f"Strategy '{self.strategy_name}' not found, using default 'default' strategy")
+            strategy_class = PluginRegistry.get_strategy('default')
         
         strategy = strategy_class()
         
         # Apply each operation with the strategy
+        print("self.operations->", self.operations)
         for op_name in self.operations:
             operation_class = PluginRegistry.get_operation(op_name)
+            print("self.operation_class->", operation_class)
             if operation_class:
                 operation = operation_class()
                 data = strategy.apply(operation, self.context)
@@ -115,9 +118,10 @@ class RetentionPolicy(Policy):
 
     def __repr__(self):
         return (
-            f"RetentionPolicy(uniq_id={self.uniq_id!r}, name={self.name!r}, enabled={self.enabled!r}, "
+            f"DownSamplerPolicy(uniq_id={self.uniq_id!r}, name={self.name!r}, enabled={self.enabled!r}, "
             f"triggers={self.triggers!r}, selector={self.selector!r}, "
-            f"retention_time={self.retention_time!r}, warning_time={self.warning_time!r}, "
+            f"preserve_original={self.preserve_original!r}, methods={self.methods!r}, "
             f"strategy_name={self.strategy_name!r}, operations={self.operations!r}, "
             f"exceptions={self.exceptions!r})"
         )
+

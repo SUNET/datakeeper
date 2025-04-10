@@ -25,38 +25,37 @@ policy_templates:
 
 # Define the actual policies
 policies:
-- name: "automatic-deletion"
-  description: "Automatically delete data after specified retention period"
-  enabled: true
-  selector:
-    data_type: [ "csv", "hdf5" ]
-    tags:
-    - "sensor-array"
-    paths:
-    - "/tmp/datakeeper-data"
-    - "/tmp/datakeeper-data-2"
-  triggers:
-  - type: on-demand
-    spec:
-      api: /collect/data
-  - type: schedule
-    spec:
-      type: cron
-      cron: "*/2 * * * *" # Run at 2 AM daily
-  actions:
-  - type: "retention"
-    spec:
-      <<: *standard_retention
-      operations: [ "data-reduction" ]
-      time_unit: "minute" # [second, minute, hour, day]
-      retention_time: 2
-      warning_time: 10
-      strategy: "default" # delete without reduction
-      exceptions:
-      - condition: "metadata.priority == 'high'"
-        retention_time: 365 # days
-      - condition: "metadata.tagged == 'preserve'"
-        retention_time: -1 # never delete
+# - name: "automatic-deletion"
+#   description: "Automatically delete data after specified retention period"
+#   enabled: true
+#   selector:
+#     data_type: [ "csv", "hdf5" ]
+#     tags:
+#     - "sensor-array"
+#     paths:
+#     - "/tmp/datakeeper-data"
+#   triggers:
+#   - type: on-demand
+#     spec:
+#       api: /collect/data
+#   - type: schedule
+#     spec:
+#       type: cron
+#       cron: "*/2 * * * *" # Run at 2 AM daily
+#   actions:
+#   - type: "retention"
+#     spec:
+#       <<: *standard_retention
+#       operations: [ "data-reduction" ]
+#       time_unit: "minute" # [second, minute, hour, day]
+#       retention_time: 2
+#       warning_time: 10
+#       strategy: "default" # delete without reduction
+#       exceptions:
+#       - condition: "metadata.priority == 'high'"
+#         retention_time: 365 # days
+#       - condition: "metadata.tagged == 'preserve'"
+#         retention_time: -1 # never delete
 
 - name: "sampling-reduction"
   description: "Reduce sampling rate in time or space"
@@ -64,31 +63,31 @@ policies:
   selector:
     data_type: [ "hdf5" ]
     tags:
-    - "sensor-array"
     - "high-frequency"
     paths:
-    - "/data/sensor_a/"
-    - "/data/sensor_b/"
+    - "/tmp/samplers"
   triggers:
+  - type: on-demand
+    spec:
+      api: /collect/data
+  - type: condition
+    spec:
+      value: "storage.utilization > 80%"
   - type: schedule
     spec:
       type: cron
-      cron: "* 2 * * * *" # Run at 2 AM daily
-  - condition: "storage.utilization > 80%"
+      cron: "*/2 * * * *" # Run at 2 AM daily
   actions:
-  - type: "transform"
+  - type: "downsampler"
     spec:
-      operations: [ "downsample" ]
+      operations: [ "data-down-sampling" ]
       preserve_original: false # replace original
       methods:
-      - dimension: "temporal"
+      - dimension: "temporal" # []
         algorithm: "average"
         factor: 4 # Every 4 samples become 1
+        dataset: "data"
         apply_to_channels: "all"
-      - dimension: "spatial"
-        algorithm: "sum"
-        factor: 2 # Every 2 channels are summed
-        apply_to_channels: "metadata.reducible_channels"
 
 # * * * * * command_to_execute
 # - - - - -

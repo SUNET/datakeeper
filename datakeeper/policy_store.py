@@ -34,6 +34,9 @@ class PolicyStore(LoggerMixin):
     
             # Load policy configuration
             self.load()
+            
+            print("-----")
+            print(self.policies)
 
             
         except Exception as e:
@@ -135,14 +138,14 @@ class PolicyStore(LoggerMixin):
 
     def apply_policies(self, context={}):
         """Apply all applicable policies to the given data."""
-
+        result = None
         for policy in self.policies:
             if policy.enabled and policy.evaluate(context):
                 self.log_info(f"Applying policy '{policy.name}'")
                 try:
                     result = policy.apply(context)
                 except Exception as e:
-                    self.log_error(f"Error applying policy '{policy.name}': {e}", exc_info=True)
+                    self.logger.error(f"Error applying policy '{policy.name}': {e}", exc_info=True)
         
         return result
     
