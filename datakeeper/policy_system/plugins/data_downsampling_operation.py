@@ -1,15 +1,12 @@
 import os
 import glob
-import time
 import h5py
 import numpy as np
-from enum import Enum
 from typing import List
 from typing import Dict, Any
 from datetime import datetime
 from datakeeper.database.db import Database
 from datakeeper.policy_system.plugin_registry import Operation, PluginRegistry
-
 
 
 def downsample_dataset(dataset, temporal_factor=None, spatial_factor=None, method=None):
@@ -34,8 +31,6 @@ def downsample_dataset(dataset, temporal_factor=None, spatial_factor=None, metho
     numpy.ndarray
         Downsampled array
     """
-    import numpy as np
-    import h5py
     
     # Convert to numpy array if it's an HDF5 dataset
     if isinstance(dataset, h5py.Dataset):
@@ -105,43 +100,6 @@ def downsample_dataset(dataset, temporal_factor=None, spatial_factor=None, metho
     return data
 
 
-def downsample_hdf5_file(input_file, output_file="_temporary.hdf5",  dataset_paths = ["data"], temporal_factor=None, 
-                         spatial_factor=None, method='mean', make_copy=True):
-    
-    success = copy_hdf5(input_file, output_file, exclude_paths=dataset_paths)
-    if success:
-        with h5py.File(input_file, 'r') as fin, h5py.File(output_file, 'a') as fout:
-            for path in dataset_paths:
-                data = fin[path]
-                
-                # TODO: call downsamplign
-                downsampled = downsample_dataset(data, temporal_factor = temporal_factor)
-                
-                # Create output dataset (create parent groups if needed)
-                group_path = path.rsplit('/', 1)[0] if '/' in path else '/'
-                if group_path != '/' and group_path not in fout:
-                    fout.create_group(group_path)
-                
-                ds = fout.create_dataset(path, data=downsampled, compression='gzip')
-                
-                # Copy attributes from original dataset
-                for key, value in data.attrs.items():
-                    ds.attrs[key] = value
-                
-                # Add downsampling information to attributes
-                ds.attrs['downsampled_from_original'] = True
-                if temporal_factor:
-                    ds.attrs['temporal_downsampling_factor'] = temporal_factor
-                if spatial_factor:
-                    ds.attrs['spatial_downsampling_factor'] = spatial_factor
-                ds.attrs['downsampling_method'] = method
-                print(downsampled)
-                print(np.shape(downsampled))
-                print(f"group_path={group_path}")
-
-
-
-
 def copy_hdf5(source_file, target_file, exclude_paths=None, logger=None):
     log = logger.info if logger else print
     if exclude_paths is None:
@@ -157,7 +115,7 @@ def copy_hdf5(source_file, target_file, exclude_paths=None, logger=None):
                 def _copy_recursively(name, obj):
                     # Check if current path should be excluded
                     if any(name == path or name.startswith(path + '/') for path in exclude_paths):
-                        print(f"Skipping excluded path: {name}")
+                        log(f"Skipping excluded path: {name}")
                         return
                     
                     # Handle groups (directories)
@@ -197,7 +155,7 @@ def copy_hdf5(source_file, target_file, exclude_paths=None, logger=None):
         log(f"Error copying HDF5 file: {e}")
         return False
 
-      
+
 def downsample_hdf5_file(data_files,
                         extension,
                         dataset_paths = ["data"], 
@@ -206,26 +164,60 @@ def downsample_hdf5_file(data_files,
                         method='mean', 
                         make_copy=True,
                         logger=None,):
-    # input_file, output_file="_temporary.hdf5"
+
     log = logger.info if logger else print
     extension = clean_extension(extension)
     log(f"data_files->{data_files}")
     log(f"directory->{dir}")
-    file_access_method ="a" if make_copy else "w"
+    file_access_method = 'a' if make_copy else 'w'
     for data_file in data_files:
         curr_dir, filename = data_file.rsplit('/', 1)
         new_data_file = os.path.join(curr_dir, f"{filename.rsplit('.', 1)[0]}_temp.{extension}")
         log(f"data_file->{data_file, new_data_file}")
         if make_copy:
             copy_hdf5(data_file, new_data_file, exclude_paths=dataset_paths, logger=logger)
-        # TODO: Call downsampling
+
+        with h5py.File(data_file, 'r') as fin, h5py.File(new_data_file, file_access_method) as fout:
+            for path in dataset_paths:
+                data = fin[path]
+                
+                # TODO: call downsamplign
+                downsampled = downsample_dataset(data, temporal_factor = temporal_factor)
+                
+                
+                # Create output dataset (create parent groups if needed)
+                group_path = path.rsplit('/', 1)[0] if '/' in path else '/'
+                if group_path != '/' and group_path not in fout:
+                    fout.create_group(group_path)
+                
+                ds = fout.create_dataset(path, data=downsampled, compression='gzip')
+                
+                # Copy attributes from original dataset
+                for key, value in data.attrs.items():
+                    ds.attrs[key] = value
+                
+                # Add downsampling information to attributes
+                ds.attrs['downsampled_from_original'] = True
+                if temporal_factor:
+                    ds.attrs['temporal_downsampling_factor'] = temporal_factor
+                if spatial_factor:
+                    ds.attrs['spatial_downsampling_factor'] = spatial_factor
+                ds.attrs['downsampling_method'] = method
+
+
+        # Replace the original file with the downsampled version
+        if os.path.exists(data_file):
+            os.remove(data_file)
+        os.rename(new_data_file, data_file)
+
 
 def clean_extension(extension):
     # Normalize extension format
     if extension.startswith("."):
         return  extension[1:]
     return extension 
-        
+
+
 def get_directories_files(
     directory: str,
     extension: str,
@@ -244,13 +236,8 @@ def get_directories_files(
     matching_files = glob.glob(
         os.path.join(directory, pattern), recursive=recursive
     )
-    print(matching_files)
     log(f"Found {len(matching_files)} files with extension .{extension}")
     return matching_files
-
-
-
-
 
 
 @PluginRegistry.register_operation
@@ -268,35 +255,49 @@ class DataDownSamplingOperation(Operation):
         policy_id = context.get("policy_id")
         data_type = context.get("data_type", ["csv"])
         file_paths = context.get("file_paths", [])
+        methods = context.get("methods", [])
         try:
             self.log_info(f"DataReductionOperation->policy_id:{policy_id}")
             self.log_info(f"DataReductionOperation->database:{database}")
             self.log_info(f"context:{context}")
+            self.log_info(f"methods:{methods}")
             database.update_schedule(policy_id, {"status": "running"})
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
             for dir in file_paths:
                 for file_type in data_type:
                     self.log_info(f"dir={dir}, file_type={file_type}")
                     data_files = get_directories_files(directory=dir, extension=file_type,recursive=True,logger=self.logger)
-                    downsample_hdf5_file(data_files,
-                                         extension=file_type,
-                        dataset_paths = ["data"], 
-                        temporal_factor=None, 
-                        spatial_factor=None, 
-                        method='mean', 
-                        make_copy=True,
-                        logger=self.logger,)
-                    
-
+                    for index, method in enumerate(methods):
+                        self.log_info(f"index.{index} -> methods:{method}")
+                        self.log_info(f"{method['dimension']}")
+                        self.log_info(f"{method['algorithm']}")
+                        self.log_info(f"{method['factor']}")
+                        self.log_info(f"{method['dataset']} --> {type(method['dataset'])}")
+                        if method['dimension'] == "temporal":
+                            downsample_hdf5_file(data_files,
+                                                extension=file_type,
+                                                dataset_paths = method['dataset'], 
+                                                temporal_factor=method['factor'], 
+                                                method=method['algorithm'], 
+                                                make_copy=True,
+                                                logger=self.logger,)
+                        elif method['dimension'] == "spatial":
+                            downsample_hdf5_file(data_files,
+                                                extension=file_type,
+                                                dataset_paths = method['dataset'], 
+                                                spatial_factor=method['factor'], 
+                                                method=method['algorithm'], 
+                                                make_copy=True,
+                                                logger=self.logger,)
             self.log_info(
                 f"[{timestamp}] Executing downsampling on {context.get('file_paths', 'unknown file')}"
             )
-            # database.update_schedule(policy_id, {"status": "success"})
+            database.update_schedule(policy_id, {"status": "success"})
             return context
         except Exception as err:
             self.log_error(
                 f"Error Executing data reduction on {context.get('file_paths', 'unknown file')}: {err}"
             )
-            # database.update_schedule(
-            #     policy_id, {"status": "failed", "last_error": str(err)}
-            # )
+            database.update_schedule(
+                policy_id, {"status": "failed", "last_error": str(err)}
+            )

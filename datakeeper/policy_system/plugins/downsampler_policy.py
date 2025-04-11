@@ -36,8 +36,6 @@ class DownSamplerPolicy(Policy):
             "exceptions": self.exceptions
         }
         self.database = db
-        # print("=== SPEC ===")
-        # print(spec)
         self._set_scheduled_operations_sql()
 
     
@@ -104,10 +102,8 @@ class DownSamplerPolicy(Policy):
         strategy = strategy_class()
         
         # Apply each operation with the strategy
-        print("self.operations->", self.operations)
         for op_name in self.operations:
             operation_class = PluginRegistry.get_operation(op_name)
-            print("self.operation_class->", operation_class)
             if operation_class:
                 operation = operation_class()
                 data = strategy.apply(operation, self.context)

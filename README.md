@@ -42,7 +42,6 @@ The **Data Reduction Policy** defines strategies to manage and reduce the volume
 
 ## 🚀 Installation Guide
 
-
 Please note that **Git** is required for all installation methods. Additionally, **DataKeeper** requires either:
 
 - **Python 3.9**,  
@@ -53,7 +52,6 @@ You can check your GLIBC version with the following command:
 ```bash
 ldd --version
 ```
-
 
 You can install **DataKeeper** using one of the following methods:
 
@@ -183,9 +181,8 @@ For an example of `policy.yaml`, visit check the policy file:
 To generate test data in the monitored folder, use the following command:
 
 ```bash
-datakeeper generate --format hdf5 --base-dir [folder-path] --create-dir
+python main.py generate --format hdf5 --base-dir [folder-path] --create-dir
+datakeeper generate --format hdf5 --base-dir [folder-path] --create-dir --num-files [N]
 ```
 
 This will create the necessary directories and generate the data in the specified format (`hdf5`).
-
-
