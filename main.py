@@ -8,6 +8,7 @@ from datakeeper.job_scheduler import JobScheduler
 from datakeeper.settings import DataKeeperSettings
 from datakeeper.policy_manager import PolicyManager
 from datakeeper.data_generator import DataGenerator
+from datakeeper.api_server import APIServer
 from importlib.metadata import PackageNotFoundError, version as importlib_version
 
 @click.group(invoke_without_command=True)
@@ -46,9 +47,16 @@ def schedule(config, verbose):
     Schedule monotoring jobs for data retention policy
     """
     settings = DataKeeperSettings(config)
+    # Get API configuration from settings or env vars
     print(settings)
-    datastore_db = Database(db_path=settings.db_path, init_file_path=settings.init_file_path)
+    datastore_db = Database(db_path=settings.db_path, init_file_path=settings.init_file_path, init_db=False)
 
+    api_server = APIServer(
+        settings=settings,
+        host=settings.api_host,
+        port=settings.api_port
+    )
+    
     # Initialize the policy store
     policy_store = PolicyStore(
         db=datastore_db,
@@ -63,8 +71,11 @@ def schedule(config, verbose):
     )
 
     policy_mgmt = PolicyManager(
-        policy_store=policy_store, job_scheduler=job_scheduler, database=datastore_db
+        policy_store=policy_store, job_scheduler=job_scheduler, database=datastore_db,
+        api_server=api_server
     )
+    
+
     # policy_mgmt.start_simple()
     policy_mgmt.start()
     

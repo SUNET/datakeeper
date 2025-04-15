@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="../static/index.css">
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container">
+    <div class="card"  x-data="jobsData()">
+        <div class="card-header">
+            <h2 class="card-title">Jobs+</h2>
+            <input type="text" class="search-bar" id="jobSearch" placeholder="Search jobs...">
+        </div>
+        
+        <table id="jobsTable">
+            <thead>
+                <tr>
+                    <th>Job Name</th>
+                    <th>Date Run</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="jobsList">
+                {% for job in jobs %}
+                 <tr>
+                    <td>{{ job.name }}</td>
+                    <td>{{ job.operation }}</td>
+                    <td>{{ job.trigger_spec }}</td>
+                    <td><span class="status ${getStatusClass(job.status)}">{{ job.status }}</span></td>
+                    <td>
+                        <button class="action-btn view-btn" data-id="${job.id}">View</button>
+                        <button class="action-btn rerun-btn" data-id="${job.id}">Rerun</button>
+                    </td>
+                 </tr>
+                 {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="pagination">
+            <button class="page-btn">Previous</button>
+            <button class="page-btn active">1</button>
+            <button class="page-btn">2</button>
+            <button class="page-btn">3</button>
+            <button class="page-btn">Next</button>
+        </div>
+        <!-- {{ jobs }} -->
+
+        {{ jobs }}
+          
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<!-- <script src="../static/index.js"></script> -->
+<script id="jobs-data" type="application/json">
+    {{ jobs | tojson }}
+</script>
+<script>
+    function jobsData() {
+        return {
+            jobs: JSON.parse(document.getElementById('jobs-data').textContent || '[]'),
+            filteredJobs: [],
+            searchTerm: '',
+            
+            init() {
+                console.log("init here")
+                console.log(jobs)
+                this.filteredJobs = [...this.jobs];
+            },
+            
+            getStatusClass(status) {
+                const statusMap = {
+                    'completed': 'status-completed',
+                    'running': 'status-running',
+                    'failed': 'status-failed',
+                    'pending': 'status-pending'
+                };
+                return statusMap[status] || '';
+            },
+            
+            filterJobs() {
+                const term = this.searchTerm.toLowerCase();
+                this.filteredJobs = this.jobs.filter(job => 
+                    job.name.toLowerCase().includes(term) || 
+                    job.status.toLowerCase().includes(term)
+                );
+            },
+            
+            viewJob(id) {
+                alert(`Viewing job #${id} details`);
+            },
+            
+            rerunJob(id) {
+                alert(`Rerunning job #${id}`);
+            }
+        }
+    }
+</script>
+{% endblock %}

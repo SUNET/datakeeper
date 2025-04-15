@@ -18,9 +18,12 @@ class DataKeeperSettings:
         self.policy_path = self.get("DATAKEEPER", "POLICY_PATH", required=True)
         self.db_path = self.get("DATAKEEPER", "DB_PATH", required=True)
         self.init_file_path = self.get("DATAKEEPER", "INIT_FILE_PATH", default=None)
+        self.api_host = self.get("API", "HOST", default='0.0.0.0')
+        self.api_port = int(self.get("API", "PORT", default='5000'))
         
         # Set env
         os.environ["LOG_DIRECTORY"] = self.log_directory
+        os.environ["DB_PATH"] = self.db_path
 
     def get(self, section: str, key: str, required: bool = False, default=None):
         """Retrieve a configuration value with optional defaults."""

@@ -6,11 +6,12 @@ from datakeeper.database.db import Database
 from datakeeper.policy_store import PolicyStore
 from datakeeper.mixins.logger import LoggerMixin
 from datakeeper.job_scheduler import JobScheduler
+from datakeeper.api_server import APIServer
 
 
 class PolicyManager(LoggerMixin):
     def __init__(
-        self, policy_store, job_scheduler, database, log_file="policy_mgmt_system.log"
+        self, policy_store, job_scheduler, database, api_server: APIServer=None, log_file="policy_mgmt_system.log"
     ):
         super().__init__(log_file)
         """Main entry point for the application."""
@@ -19,6 +20,7 @@ class PolicyManager(LoggerMixin):
         self.policy_store: PolicyStore = policy_store
         self.job_scheduler: JobScheduler = job_scheduler
         self.database: Database = database
+        self.api_server: APIServer = api_server
 
     def monitor_policy_changes(self, policy_store, job_scheduler, check_interval=300):
         """Monitor for changes to policy files and reload when necessary."""
@@ -67,6 +69,11 @@ class PolicyManager(LoggerMixin):
         self.logger.info("Starting Policy System")
 
         try:
+            # Start the API server
+            self.api_server.start()
+            self.logger.info("API server started")
+            print(f"Started API server on {self.api_server.host}:{self.api_server.port}")
+            
             # Start the scheduler in a daemon thread
             self.scheduler_thread = self.job_scheduler.run_in_thread()
             self.logger.info("Job scheduler started in background thread")
@@ -85,6 +92,7 @@ class PolicyManager(LoggerMixin):
                 # Shutdown the job scheduler
                 self.database.remove_all()
                 self.job_scheduler.shutdown()
+                self.api_server.shutdown()
                 self.logger.info("Application shutdown complete")
 
         except Exception as e:

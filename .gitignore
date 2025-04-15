@@ -21,7 +21,6 @@ pip-wheel-metadata/
 out/
 coverage/
 
-
 # PyInstaller
 #  PyInstaller specific files
 *.manifest
@@ -46,7 +45,6 @@ env
 .env.*.local
 deployment/output
 
-
 # Configuration files
 config.yaml
 
@@ -61,6 +59,11 @@ data/
 *.swo
 *.swn
 
+# Node modules
+node_modules/
+**/node_modules/
+datakeeper/datakeeper/api/node_modules/
+jspm_packages/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -96,7 +99,6 @@ pids/
 *.seed
 *.pid.lock
 
-
 # Logs
 logs/
 *.log
@@ -117,14 +119,3 @@ datakeeper/hdf5_test.py
 datakeeper/sample_hdf5_data
 datakeeper/config/policy_full.yaml
 main_test.py
-
-
-
-
-
-# Node modules
-node_modules/
-**/node_modules/
-datakeeper/datakeeper/api/node_modules/
-jspm_packages/
-

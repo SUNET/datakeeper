@@ -8,7 +8,7 @@ from datakeeper.settings import DataKeeperSettings
 
 
 class Database(LoggerMixin):
-    def __init__(self, db_path: str, init_file_path: str=None, log_file: str = "database.log"):
+    def __init__(self, db_path: str, init_file_path: str=None, log_file: str = "database.log", init_db: bool = False):
         """Init
 
         Args:
@@ -21,8 +21,8 @@ class Database(LoggerMixin):
         # Set db_path and init_file_path using settings or defaults.
         self.db_path = db_path if db_path else os.path.join(os.path.dirname(__file__), "database.sqlite") 
         self.init_path = init_file_path if init_file_path else os.path.join(os.path.dirname(__file__), "init.sql")
-        
-        self._init_db()
+        if init_db:
+            self._init_db()
 
 
     def _init_db(self):

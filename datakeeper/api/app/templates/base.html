@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datakeeper</title>
+    <!--  js -->
+    <script src="../static/htmx.min.js"></script>
+    <script src="../static/alpine.min.js.js"></script>
+    <!--  css -->
+    <link rel="stylesheet" href="../static/output.css">
+    <link rel="stylesheet" href="../static/base.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">Datakeeper</a>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">Settings</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main>
+        <div class="content-container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    <!--
+        <footer>
+            &copy; 2025 SiteName. All rights reserved.
+        </footer>
+    -->
+    {% block extra_js %}{% endblock %}
+    <!-- Global state -->
+    <script>
+        document.addEventListener('alpine:init', () => {
+          Alpine.store('darkMode', {
+            on: false,
+            toggle() {
+              this.on = !this.on
+            }
+          });
+        });
+    </script>
+    <!--
+        <div x-data>
+        <button @click="$store.darkMode.toggle()">Toggle Dark Mode</button>
+        <p x-text="$store.darkMode.on ? 'Dark Mode' : 'Light Mode'"></p>
+        </div>
+    -->
+</body>
+</html>
+
