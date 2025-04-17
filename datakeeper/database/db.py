@@ -1,9 +1,12 @@
 import os
+import json
+import asyncio
 import sqlite3
 from pathlib import Path
 from typing import Dict, Optional
 from datakeeper.mixins.logger import LoggerMixin
 from datakeeper.settings import DataKeeperSettings
+from datakeeper.api.app import sse_manager
 # TODO: check database changes !!!!
 
 
@@ -192,6 +195,21 @@ class Database(LoggerMixin):
                     )
                     self.logger.info(f"Execute {formatted_query}")
                     cursor.execute(sql_query, sql_values)
+
+                    # Fetch the updated job (optional but useful for SSE)
+                    cursor.execute(
+                        "SELECT * FROM job WHERE policy_id = ?", (policy_id,)
+                    )
+                    updated_job = cursor.fetchone()
+                    if updated_job:
+                        
+                        columns = [column[0] for column in cursor.description]
+                        job_data = dict(zip(columns, updated_job))
+                        print(f"SSE EVENT: {job_data}")
+                        self.logger.info(f"SSE EVENT: {job_data}")
+
+                        # Use the thread-safe method instead of accessing the event loop directly
+                        sse_manager.enqueue_job_update(job_data)
 
                 conn.commit()
                 self.logger.info(f"Updated schedule for policy with ID: {policy_id}")

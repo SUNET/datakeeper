@@ -83,6 +83,16 @@ tbody tr:hover {
     color: #f39c12;
 }
 
+.status-scheduled {
+    background-color: #f0f4ff;  /* light indigo/blue hint */
+    color: #5b78c7;             /* calm indigo/blue tone */
+}
+
+.status-registered {
+    background-color: #f9f9f9;  /* subtle neutral tone */
+    color: #7f8c8d;             /* grayish tone for initial/default state */
+}
+
 .action-btn {
     background: none;
     border: none;

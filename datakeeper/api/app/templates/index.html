@@ -10,34 +10,40 @@
 <div class="container">
     <div class="card"  x-data="jobsData()">
         <div class="card-header">
-            <h2 class="card-title">Jobs+</h2>
-            <input type="text" class="search-bar" id="jobSearch" placeholder="Search jobs...">
+            <h2 class="card-title">Jobs</h2>
+            <input 
+            type="text" 
+            class="search-bar" id="jobSearch"
+            x-model="searchTerm" 
+            @input="filterJobs()" 
+            placeholder="Search...">
         </div>
         
         <table id="jobsTable">
             <thead>
                 <tr>
-                    <th>Job Name</th>
-                    <th>Date Run</th>
-                    <th>Time</th>
+                    <th>Job</th>
+                    <th>Datapath</th>
+                    <th>Last Run Time</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody id="jobsList">
-                {% for job in jobs %}
-                 <tr>
-                    <td>{{ job.name }}</td>
-                    <td>{{ job.operation }}</td>
-                    <td>{{ job.trigger_spec }}</td>
-                    <td><span class="status ${getStatusClass(job.status)}">{{ job.status }}</span></td>
-                    <td>
-                        <button class="action-btn view-btn" data-id="${job.id}">View</button>
-                        <button class="action-btn rerun-btn" data-id="${job.id}">Rerun</button>
-                    </td>
-                 </tr>
-                 {% endfor %}
+                <template x-for="job in filteredJobs" :key="job.id">
+                    <tr>
+                        <td x-text="job.name"></td>
+                        <td x-text="job.filetypes"></td>
+                        <td x-text="job.last_run_time"></td>
+                        <td><span class="status" :class="getStatusClass(job.status)" x-text="job.status"></span></td>
+                        <td>
+                            <button class="action-btn view-btn" @click="viewJob(job.id)">View</button>
+                            <button class="action-btn rerun-btn" @click="rerunJob(job.id)">Rerun</button>
+                        </td>
+                    </tr>
+                </template>
             </tbody>
+            
         </table>
         
         <div class="pagination">
@@ -47,16 +53,30 @@
             <button class="page-btn">3</button>
             <button class="page-btn">Next</button>
         </div>
-        <!-- {{ jobs }} -->
 
-        {{ jobs }}
-          
+        <!-- <button @click="console.log(jobs)">Log Jobs</button> -->
+        <!--
+        <div
+            hx-ext="sse"
+            sse-connect="/events"
+            sse-swap="message"
+            id="sse-output"
+            class="box"
+        >
+            <em>Waiting for updates...</em>
+        </div>
+
+        <div x-data="sseHandler()" class="p-4 bg-gray-100">
+            <h2 class="text-xl mb-2">Live Updates:</h2>
+            <div x-text="message" class="text-green-700 font-mono"></div>
+        </div>
+        -->
     </div>
 </div>
 {% endblock %}
 
 
-{% block extra_js %}
+{% block extra_pre_js %}
 <!-- <script src="../static/index.js"></script> -->
 <script id="jobs-data" type="application/json">
     {{ jobs | tojson }}
@@ -69,17 +89,20 @@
             searchTerm: '',
             
             init() {
-                console.log("init here")
-                console.log(jobs)
                 this.filteredJobs = [...this.jobs];
+                this.listenToJobUpdates();
             },
             
             getStatusClass(status) {
+                // 'added', 'scheduled', 'running', 'success', 'failed')
                 const statusMap = {
                     'completed': 'status-completed',
                     'running': 'status-running',
                     'failed': 'status-failed',
-                    'pending': 'status-pending'
+                    'pending': 'status-pending',
+                    'registered': 'status-registered',
+                    'scheduled': 'status-scheduled',
+
                 };
                 return statusMap[status] || '';
             },
@@ -91,7 +114,19 @@
                     job.status.toLowerCase().includes(term)
                 );
             },
-            
+            listenToJobUpdates() {
+                const source = new EventSource('/events');
+                source.addEventListener('job_update', (event) => {
+                    const update = JSON.parse(event.data);
+                    const index = this.jobs.findIndex(j => j.id === update.id);
+                    if (index !== -1) {
+                        this.jobs[index] = { ...this.jobs[index], ...update };
+                    } else {
+                        this.jobs.push(update);
+                    }
+                    this.filterJobs(); // keep filtered view fresh
+                });
+            },
             viewJob(id) {
                 alert(`Viewing job #${id} details`);
             },
@@ -101,5 +136,44 @@
             }
         }
     }
+    function sseHandlerUnamedAny() {
+        return {
+            message: 'Waiting for updates... 🔗🔗🔗',
+            init() {
+                const source = new EventSource("/events");
+    
+                source.onmessage = (event) => {
+                    this.message = event.data;
+                    console.log("New event:", event);
+                    console.log("New SSE message:", event.data);
+                };
+    
+                source.onerror = (error) => {
+                    console.error("SSE error:", error);
+                };
+            }
+        }
+    }
+    function sseHandler() {
+        return {
+            message: 'Waiting for updates... 🔗🔗🔗',
+            init() {
+                const source = new EventSource("/events");
+    
+                // Listen for the specific `job_update` event
+                source.addEventListener('job_update', (event) => {
+                    const data = JSON.parse(event.data);
+                    this.message = `Update received for job #${data.id} → status: ${data.status}`;
+                    console.log("Job update event:", data);
+                });
+    
+                source.onerror = (error) => {
+                    console.error("SSE error:", error);
+                    this.message = "Connection lost. ❌ Retrying...";
+                };
+            }
+        }
+    }
+    
 </script>
 {% endblock %}

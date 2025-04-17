@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS job (
     filetypes TEXT NOT NULL,
     trigger_type TEXT NOT NULL,
     trigger_spec TEXT NOT NULL CHECK (json_valid(trigger_spec)),  -- JSON constraint
-    status TEXT CHECK (status IN ('added', 'scheduled', 'running', 'success', 'failed')),
+    status TEXT CHECK (status IN ('registered', 'pending', 'scheduled', 'running', 'completed', 'failed')),
     last_error TEXT DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_run_time TIMESTAMP DEFAULT NULL,

@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Datakeeper</title>
     <!--  js -->
-    <script src="../static/htmx.min.js"></script>
-    <script src="../static/alpine.min.js.js"></script>
+    <script src="../static/htmx.min.2.0.4.js"></script>
+    <script src="../static/sse2.2.2.js"></script>
+    <script src="../static/alpine.min.js"></script>
+    {% block extra_pre_js %}{% endblock %}
     <!--  css -->
     <link rel="stylesheet" href="../static/output.css">
     <link rel="stylesheet" href="../static/base.css">
@@ -18,7 +20,7 @@
             <a href="/" class="logo">Datakeeper</a>
             <ul class="nav-menu">
                 <li><a href="/">Home</a></li>
-                <li><a href="/about">Settings</a></li>
+                <li><a href="/">Policy</a></li>
             </ul>
         </div>
     </nav>
@@ -33,7 +35,7 @@
             &copy; 2025 SiteName. All rights reserved.
         </footer>
     -->
-    {% block extra_js %}{% endblock %}
+    {% block extra_post_js %}{% endblock %}
     <!-- Global state -->
     <script>
         document.addEventListener('alpine:init', () => {

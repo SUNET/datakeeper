@@ -51,7 +51,7 @@ class RetentionPolicy(Policy):
                 "filetypes": json.dumps(self.context["file_paths"]),
                 "trigger_type": self.schedule['type'],
                 "trigger_spec": json.dumps(self.schedule['spec']),
-                "status": 'added',
+                "status": 'registered',
             }
             sql_values = list(data_in.values())
             self.scheduled_operations.append(data_in)

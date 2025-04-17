@@ -38,7 +38,7 @@ class Job(Base):
     filetypes = Column(String, nullable=False)
     trigger_type = Column(String, nullable=False)
     trigger_spec = Column(Text, CheckConstraint('json_valid(trigger_spec)'), nullable=False)
-    status = Column(String, CheckConstraint("status IN ('added', 'scheduled', 'running', 'success', 'failed')"))
+    status = Column(String, CheckConstraint("status IN ('registered', 'pending', 'scheduled', 'running', 'completed', 'failed')"))
     last_error = Column(Text, nullable=True)
     created_at = Column(DateTime, server_default=func.current_timestamp())
     last_run_time = Column(DateTime, nullable=True)

@@ -1,23 +1,36 @@
 import os
+import asyncio
 from typing import List, Tuple
 from sqlalchemy.orm import Session
+from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import StreamingResponse
 from datakeeper.api.app.models import Policy, Job
 from fastapi.middleware.cors import CORSMiddleware
 from datakeeper.api.app.db import get_db, db_engine, Base
 from fastapi import FastAPI, Request, Form, Depends, status
 from datakeeper.api.app.requests import PolicyResponseModel, JobResponseModel
+from datakeeper.api.app import sse_manager
 
 
 def init_db(Base):
     Base.metadata.create_all(bind=db_engine)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    sse_manager.job_event_queue = asyncio.Queue()
+    sse_manager.data_event_queue = asyncio.Queue()
+    sse_manager.set_main_event_loop(asyncio.get_running_loop())
+    yield
+    sse_manager.job_event_queue = None
+    sse_manager.data_event_queue = None
 
 init_db(Base)
 # API application
 app = FastAPI(
-    title="DataKeeper API", description="Management API for DataKeeper Policy System"
+    title="DataKeeper API", description="Management API for DataKeeper Policy System",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
@@ -37,6 +50,9 @@ app.mount("/static", StaticFiles(directory=STATIC_FOLDER), name="static")
 templates = Jinja2Templates(directory=TEMPLATES_FOLDER)
 
 
+
+    
+
 @app.get("/")
 def read_root(request: Request, db: Session = Depends(get_db)):
     jobs = db.query(Job).all()
@@ -49,6 +65,10 @@ def read_root(request: Request, db: Session = Depends(get_db)):
     )
 
 
+@app.get("/events")
+async def sse_endpoint():
+    # return StreamingResponse(event_generator(), media_type="text/event-stream")
+    return StreamingResponse(sse_manager.event_stream(), media_type="text/event-stream")
 
 @app.get(
     "/status",

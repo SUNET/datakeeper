@@ -292,7 +292,7 @@ class DataDownSamplingOperation(Operation):
             self.log_info(
                 f"[{timestamp}] Executing downsampling on {context.get('file_paths', 'unknown file')}"
             )
-            database.update_schedule(policy_id, {"status": "success"})
+            database.update_schedule(policy_id, {"status": "completed"})
             return context
         except Exception as err:
             self.log_error(
