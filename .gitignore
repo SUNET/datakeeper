@@ -38,6 +38,10 @@ fastapi.server.md
 temp/
 nuitka-build
 .env
+*.ini
+**/*.env
+**/*.ini
+config.ini
 /.env
 ./.env
 env

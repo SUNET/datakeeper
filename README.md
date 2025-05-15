@@ -171,6 +171,27 @@ PLUGIN_DIR = /tmp/datakeeper/datakeeper/policy_system/plugins
 POLICY_PATH = /tmp/datakeeper/datakeeper/config/policy.yaml
 DB_PATH = /tmp/datakeeper/datakeeper/database/database.sqlite
 INIT_FILE_PATH = /tmp/datakeeper/datakeeper/database/init.sql
+
+[API]
+HOST = 0.0.0.0
+PORT = 3000
+
+[AIS]
+AIS_USER=XXX
+AIS_USER_PASSWORD=XXX
+AIS_SERVER_HOST=XXX
+AIS_SERVER_PORT=XXX
+
+[MONGO]
+MONGO_URL=mongodb://XXX:XXX@localhost:27017
+MONGO_DB=XXX
+MONGO_COLLECTION=XXX
+ENABLE_MONGO_OUTPUT=true
+
+[KAFKA]
+BOOTSTRAP_SERVERS=XXX
+KAFKA_TOPIC=XXX
+ENABLE_KAFKA_OUTPUT=false
 ```
 
 For an example of `policy.yaml`, visit check the policy file:  

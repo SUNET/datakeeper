@@ -1,6 +1,8 @@
 import os
 import sys
 import click
+import asyncio
+import traceback
 from pathlib import Path
 from datakeeper.database.db import Database
 from datakeeper.policy_store import PolicyStore
@@ -10,6 +12,8 @@ from datakeeper.policy_manager import PolicyManager
 from datakeeper.data_generator import DataGenerator
 from datakeeper.api_server import APIServer
 from importlib.metadata import PackageNotFoundError, version as importlib_version
+from ais_live_router.ais_processor import ais_main
+
 
 @click.group(invoke_without_command=True)
 @click.option("--version", is_flag=True, help="Show the version of datakeeper.")
@@ -107,10 +111,43 @@ def generate(base_dir, random_age, num_files, create_dir, format, sub_dir):
         create_dir=create_dir,
     )
     data_generator.generate(subdirectory=sub_dir, format=format)
+    
+
+@click.command()
+@click.option(
+    "--config-path",
+    required=False,
+    type=click.Path(exists=True),
+    help="Path to the configuration file.",
+)
+@click.option( "--enable-kafka-output", is_flag=True, required=False, help="Enable Kafka output.")
+@click.option( "--enable-mongo-output", is_flag=True, required=False, help="Enable Mongo output.")
+def ais_router(config_path, enable_kafka_output, enable_mongo_output):
+    """
+    Send live data from AIS-server (sjöfarstverket) to kafka & mongodb or file
+    usage: 
+        python main.py ais_router --format csv 
+    """
+    # Placeholder implementation
+    print(f"Config path: {config_path}")
+    print(f"Kafka enabled: {enable_kafka_output}")
+    print(f"MongoDB enabled: {enable_mongo_output}")
+    
+    try:
+        asyncio.run(ais_main(config_file=config_path,
+                                 enable_mongo_output=enable_mongo_output,
+                                 enable_kafka_output=enable_kafka_output))
+    except KeyboardInterrupt:
+        print("Program interrupted by user")
+    except Exception as e:
+        print(f"Unhandled exception: {e}")
+        traceback.print_exc()
+        sys.exit(1)
 
         
 cli.add_command(schedule)
 cli.add_command(generate)
+cli.add_command(ais_router)
 
 if __name__ == "__main__":
     # sys.exit(cli())
