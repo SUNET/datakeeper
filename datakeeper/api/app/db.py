@@ -7,7 +7,7 @@ def init():
     db_vendor = "sqlite:///"
     DB_PATH = os.getenv(
         "DB_PATH",
-        "/home/benedith/Desktop/tests/datasentry/datakeeper/datakeeper/database/database.sqlite",
+        os.path.join(os.path.dirname(__file__), "database.sqlite"),
     )
     DATABASE_URL = f"{db_vendor}{DB_PATH}"
     db_engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})

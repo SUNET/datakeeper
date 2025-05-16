@@ -16,7 +16,7 @@ from ais_live_router.ais_processor import ais_main
 
 
 @click.group(invoke_without_command=True)
-@click.option("--version", is_flag=True, help="Show the version of datakeeper.")
+@click.option("--version", is_flag=True, help="Show the version of datakeeper+++.")
 def cli(version):
     """CLI tool for syncing and listing devices."""
     if version:
@@ -48,7 +48,7 @@ def cli(version):
 )
 def schedule(config, verbose):
     """
-    Schedule monotoring jobs for data retention policy
+    Schedule monotoring jobs for data retention policy+++
     """
     settings = DataKeeperSettings(config)
     # Get API configuration from settings or env vars

@@ -32,6 +32,7 @@ class AppConfigEnv:
     ais_port: int = field(default_factory=lambda: int(os.environ.get("AIS_SERVER_PORT", "8040")))
     ais_user: str = field(default_factory=lambda: os.environ.get("AIS_USER", "user"))
     ais_password: str = field(default_factory=lambda: os.environ.get("AIS_USER_PASSWORD", "pass"))
+    ais_log_file: str = field(default_factory=lambda: os.environ.get("LOG_PATH", "ais_processor.log"))
     retry_interval: int = field(default_factory=lambda: int(os.environ.get("RETRY_INTERVAL", "5")))
     max_retries: int = field(default_factory=lambda: int(os.environ.get("MAX_RETRIES", "3")))
     connection_timeout: int = field(default_factory=lambda: int(os.environ.get("CONNECTION_TIMEOUT", "30")))
@@ -74,16 +75,11 @@ class AppConfigFile:
         self.config = self.load_config(self.config_path)
         
         # AIS-Server
-        print("AppConfigFile-->")
-        print("self.config->", self.config)
-        print("self.config.sections->", self.config.sections())
-        print("self.config->", dir(self.config))
-        print("AIS_host=>", self.config.get("AIS", "AIS_SERVER_HOST"))
         self.ais_host: str = self.get("AIS", "AIS_SERVER_HOST", default="localhost")
-        print("self.ais_host=>", self.ais_host)
         self.ais_port: int = int(self.get("AIS", "AIS_SERVER_PORT", default="8040"))
         self.ais_user: str = self.get("AIS", "AIS_USER", default="user")
         self.ais_password: str = self.get("AIS", "AIS_USER_PASSWORD", default="pass")
+        self.ais_log_file: str = self.get("AIS", "LOG_PATH", default="ais_processor.log")
         self.retry_interval: int = int(self.get("AIS", "RETRY_INTERVAL", default="5"))
         self.max_retries: int = int(self.get("AIS", "MAX_RETRIES", default="3"))
         self.connection_timeout: int = int(self.get("AIS", "CONNECTION_TIMEOUT", default="30"))
@@ -100,7 +96,7 @@ class AppConfigFile:
         self.mongo_db: str = self.get("MONGO", "MONGO_DB", default="aisdb")
         self.mongo_collection: str = self.get("MONGO", "MONGO_COLLECTION", default="vessels")
         self.log_file: str = self.get("LOGGING", "FILE", default="data.log")
-        self.enable_mongo_output: bool = self.get("MONGO", "ENABLE_MONGO_OUTPUT", default="False")
+        self.enable_mongo_output: bool = self._str_to_bool(self.get("MONGO", "ENABLE_MONGO_OUTPUT", default="False"))
   
         
     def _str_to_bool(self, value: str) -> bool:

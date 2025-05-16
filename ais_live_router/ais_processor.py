@@ -8,7 +8,7 @@ import hashlib
 import traceback
 from enum import Enum
 from datetime import datetime
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 from pyais import decode as pyais_decode, IterMessages
 from ais_live_router.mongo_manager import MongoManager
 from ais_live_router.kafka_manager import KafkaManager
@@ -17,17 +17,28 @@ from ais_live_router.configuration import AppConfigEnv, AppConfigFile, logger
 
 class AISProcessor:
     """Class for processing AIS data"""
-    def __init__(self, config: Union[AppConfigEnv, AppConfigFile], enable_kafka_output: str=None, enable_mongo_output: str=None):
+        
+    def __init__(
+        self,
+        config: Union[AppConfigEnv, AppConfigFile],
+        enable_kafka_output: Optional[bool] = None,
+        enable_mongo_output: Optional[bool] = None,
+    ):
         self.config = config
-        self.mongo_manager = MongoManager(config)
-        self.kafka_manager = KafkaManager(config)
+        
+        # Override config flags only if the flags are explicitly provided and are set to true
+        # otherwise use the values from the env or config file
+        if isinstance(enable_kafka_output, bool) and enable_kafka_output:
+            self.config.enable_kafka_output = enable_kafka_output
+        if isinstance(enable_mongo_output, bool) and enable_mongo_output:
+            self.config.enable_mongo_output = enable_mongo_output
+
+        self.mongo_manager = MongoManager(self.config)
+        self.kafka_manager = KafkaManager(self.config)
         self.saved_msg_types = []
+
         
-        if enable_kafka_output:
-            self.mongo_manager.config.enable_kafka_output = enable_kafka_output
-        if enable_mongo_output:
-            self.mongo_manager.config.enable_mongo_output = enable_mongo_output
-        
+    
     def logon_msg(self) -> bytearray:
         """Create login message for AIS server"""
         # Build binary message
