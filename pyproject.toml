@@ -22,6 +22,8 @@ pymongo = "^4.13.0"
 pyais = "^2.9.2"
 confluent-kafka = "^2.10.0"
 
+[tool.poetry.scripts]
+datakeeper-cli = 'main:cli'
 
 [tool.poetry.group.dev.dependencies]
 nox = "^2025.2.9"

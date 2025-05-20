@@ -43,6 +43,8 @@ RUN poetry run nuitka --onefile --standalone --python-flag=no_site \
     --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
     --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
     --include-data-file=VERSION=VERSION \
+    --remove-output \
+    --clean-cache=all \
     main.py
 
 # Move the final binary to a known location
