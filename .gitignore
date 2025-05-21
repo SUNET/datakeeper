@@ -123,3 +123,6 @@ datakeeper/hdf5_test.py
 datakeeper/sample_hdf5_data
 datakeeper/config/policy_full.yaml
 main_test.py
+binary-builder/
+binary-builder
+./binary-builder

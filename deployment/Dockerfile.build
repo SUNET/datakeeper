@@ -39,14 +39,18 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # poetry cache clear --all .
 
 # Build the binary using Nuitka
-RUN poetry run nuitka --onefile --standalone --python-flag=no_site \
-    --output-filename=datakeeper --output-dir=nuitka-build \
-    --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
-    --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
-    --include-data-file=VERSION=VERSION \
-    --remove-output \
-    --clean-cache=all \
-    main.py
+RUN poetry run nuitka --onefile --standalone \
+  --python-flag=no_site \
+  --output-filename=datakeeper \
+  --output-dir=nuitka-build  \
+  --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
+  --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
+  --include-data-dir=datakeeper/api/app/static=datakeeper/api/app/static \
+  --include-data-dir=datakeeper/api/app/templates=datakeeper/api/app/templates \
+  --include-data-file=VERSION=VERSION \
+  --remove-output \
+  --clean-cache=all \
+  main.py
 
 # Move the final binary to a known location
 RUN mkdir -p /app/dist

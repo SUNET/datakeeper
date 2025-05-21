@@ -14,11 +14,19 @@ stream_handler = logging.StreamHandler()
 stream_handler.addFilter(StreamOnlyFilter())
 
 
+parent_dir = os.path.dirname(os.path.dirname(__file__))
+log_directory = os.getenv("AIS_LOG_DIRECTORY", parent_dir)
+log_path = os.path.join(log_directory, "logs")
+
+# Make sure that directory does exist
+os.makedirs(log_path, exist_ok=True)
+log_path = os.path.join(log_path, "ais_processor.log")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[stream_handler, logging.FileHandler("ais_processor.log")],
+    handlers=[stream_handler, logging.FileHandler(log_path)],
 )
 logger = logging.getLogger("ais_processor")
 
