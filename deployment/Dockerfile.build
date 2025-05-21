@@ -36,6 +36,7 @@ RUN poetry run pip list
 # Set the virtual environment path
 ENV VIRTUAL_ENV=/app/.venv
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# poetry cache clear --all .
 
 # Build the binary using Nuitka
 RUN poetry run nuitka --onefile --standalone --python-flag=no_site \
