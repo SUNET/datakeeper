@@ -3,18 +3,15 @@ name: Release Datakeeper
 on:
   push:
     tags:
-    - "v*.*.*" # Trigger on version tags like v1.0.0
+    - "v*.*.*"
 
 permissions:
   contents: write
 
 jobs:
   build-and-release:
-    name: Build and Release
-    runs-on: ubuntu-latest
-
     strategy:
-      fail-fast: false # Continue building other targets if one fails
+      fail-fast: false
       matrix:
         target:
         - { os: "ubuntu", version: "22.04", python: "3.9" }
@@ -22,22 +19,22 @@ jobs:
         - { os: "ubuntu", version: "24.04", python: "3.11" }
         - { os: "debian", version: "12", python: "3.11" }
 
-    container:
-      image: ${{ matrix.target.os }}:${{ matrix.target.version }}
+    runs-on: ${{ matrix.target.os }}-latest
+    # Removed container
 
     steps:
-    - name: Install system dependencies
-      run: |
-        apt-get update
-        apt-get install -y curl build-essential python${{ matrix.target.python }} python${{ matrix.target.python }}-dev python3-pip python3-venv
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.target.python }}
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl build-essential python3-pip python3-venv python3-dev
 
     - name: Install Poetry
       run: |
@@ -45,8 +42,7 @@ jobs:
         echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Configure Poetry
-      run: |
-        poetry config virtualenvs.in-project true
+      run: poetry config virtualenvs.in-project true
 
     - name: Install dependencies
       run: |
