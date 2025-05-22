@@ -95,7 +95,6 @@ jobs:
     - name: Verify binary
       run: |
         ls -la nuitka-build/
-        file nuitka-build/datakeeper-${{ matrix.target.os }}${{ matrix.target.version }}-py${{ matrix.target.python }}
 
     - name: Upload binaries to GitHub Releases
       uses: softprops/action-gh-release@v2

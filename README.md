@@ -207,3 +207,43 @@ datakeeper generate --format hdf5 --base-dir [folder-path] --create-dir --num-fi
 ```
 
 This will create the necessary directories and generate the data in the specified format (`hdf5`).
+
+### **AIS-monitoring**
+
+Send live data from the AIS-server (Sjöfartsverket) to Kafka and MongoDB, or optionally to a file.
+
+#### Description
+
+The `ais-router` command connects to the AIS-server and routes real-time vessel tracking data to different output systems. It supports Kafka, MongoDB, or both, based on the provided flags.
+
+This tool is useful for ingesting AIS (Automatic Identification System) data for maritime tracking systems, data lakes, or analytics platforms.
+
+#### Usage
+
+```bash
+python main.py ais-router [OPTIONS]
+datakeeper ais-router [OPTIONS]
+```
+
+#### Options
+
+| Option                  | Type | Description                                |
+| ----------------------- | ---- | ------------------------------------------ |
+| `--config-path PATH`    | Path | Path to the configuration file (optional) typ ini or use environmenet variables. see example conf above |
+| `--enable-kafka-output` | Flag | Enable output to Kafka.                    |
+| `--enable-mongo-output` | Flag | Enable output to MongoDB.                  |
+
+#### Example
+
+Run AIS router with a configuration file and enable both Kafka and MongoDB outputs:
+
+```bash
+python main.py ais-router \
+    --config-path ./config.yml \
+    --enable-kafka-output \
+    --enable-mongo-output
+```
+
+#### Notes
+
+- If no output flags are provided, the tool may fall environment variables or config files
