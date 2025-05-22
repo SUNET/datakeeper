@@ -19,9 +19,7 @@ jobs:
         target:
         - { os: "ubuntu", version: "22.04", python: "3.9" }
         - { os: "ubuntu", version: "22.04", python: "3.11" }
-        - { os: "ubuntu", version: "24.04", python: "3.9" }
         - { os: "ubuntu", version: "24.04", python: "3.11" }
-        - { os: "debian", version: "12", python: "3.9" }
         - { os: "debian", version: "12", python: "3.11" }
 
     container:
