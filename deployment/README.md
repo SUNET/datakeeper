@@ -1,5 +1,5 @@
 # Deployment short
-
+rsync -av datakeeper public-dco-test-collector-1.streams.sunet.se:/usr/local/bin/datakeeper
 ## Build stand-alone executables
 
 ### Dependencies
