@@ -13,44 +13,66 @@ jobs:
     name: Build and Release
     runs-on: ubuntu-latest
 
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    strategy:
+      matrix:
+        target:
+        - { os: "ubuntu", version: "22.04", python: "3.9" }
+        - { os: "ubuntu", version: "22.04", python: "3.11" }
+        - { os: "ubuntu", version: "24.04", python: "3.9" }
+        - { os: "ubuntu", version: "24.04", python: "3.11" }
+        - { os: "debian", version: "12", python: "3.9" }
+        - { os: "debian", version: "12", python: "3.11" }
 
-    - name: Set up Python
+    container:
+      image: ${{ matrix.target.os }}:${{ matrix.target.version }}
+
+    steps:
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y curl build-essential python${{ matrix.target.python }} python${{ matrix.target.python }}-dev python3-pip python3-venv
+
+    - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.9'
+        python-version: ${{ matrix.target.python }}
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Install Poetry
       run: |
         curl -sSL https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH  # Ensure Poetry is in PATH
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
     - name: Configure Poetry
       run: |
-        poetry config virtualenvs.in-project true  # Keep venv inside project
+        poetry config virtualenvs.in-project true
 
-    - name: Install dependencies with Poetry
+    - name: Install dependencies
       run: |
-        poetry install --no-root  # Install only runtime dependencies
-        poetry env info
+        poetry install --no-root
         poetry run pip list
 
     - name: Build binary with Nuitka
       run: |
         eval $(poetry env activate)
         poetry run nuitka --onefile --standalone --python-flag=no_site \
-          --output-filename=datakeeper --output-dir=nuitka-build \
+          --output-filename=datakeeper-${{ matrix.target.os }}${{ matrix.target.version }}-py${{ matrix.target.python }} \
+          --output-dir=nuitka-build \
           --include-data-file=datakeeper/database/init.sql=datakeeper/database/init.sql \
           --include-data-dir=datakeeper/policy_system/plugins=datakeeper/policy_system/plugins \
+          --include-data-dir=datakeeper/api/app/static=datakeeper/api/app/static \
+          --include-data-dir=datakeeper/api/app/templates=datakeeper/api/app/templates \
           --include-data-file=VERSION=VERSION \
+          --remove-output \
+          --clean-cache=all \
           main.py
 
-    - name: Upload binary to GitHub Releases
+    - name: Upload binaries to GitHub Releases
       uses: softprops/action-gh-release@v2
       with:
-        files: nuitka-build/datakeeper
-        body: "🚀 New Nuitka-compiled release of Datakeeper!"
+        files: nuitka-build/datakeeper-${{ matrix.target.os }}${{ matrix.target.version }}-py${{ matrix.target.python }}
+        body: "🚀 Nuitka release for `${{ matrix.target.os }}:${{ matrix.target.version }}` with Python `${{ matrix.target.python }}`"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

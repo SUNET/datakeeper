@@ -90,9 +90,9 @@ sudo cp -r "$CLONE_DIR/datakeeper/policy_system/plugins/"* "/opt/${APP_NAME}/plu
 cat <<EOF >"/opt/${APP_NAME}/$CONFIG_FILE"
 [DATAKEEPER]
 LOG_DIRECTORY = /opt/${APP_NAME}/logs/system
-PLUGIN_DIR = /opt/${APP_NAME}/plugins
 POLICY_PATH = /opt/${APP_NAME}/policy.yaml
 DB_PATH = /opt/${APP_NAME}/database/database.sqlite
+PLUGIN_DIR = /opt/${APP_NAME}/plugins
 INIT_FILE_PATH = /opt/${APP_NAME}/database/init.sql
 [API]
 HOST = 0.0.0.0
