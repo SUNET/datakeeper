@@ -23,18 +23,18 @@ jobs:
       image: ${{ matrix.target.os }}:${{ matrix.target.version }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Install system dependencies
+      run: |
+        apt-get update
+        apt-get install -y curl build-essential python${{ matrix.target.python }} python${{ matrix.target.python }}-dev python3-pip python3-venv
 
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.target.python }}
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y curl build-essential python3-pip python3-venv python3-dev
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Install Poetry
       run: |
