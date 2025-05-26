@@ -30,5 +30,5 @@ def main():
     server.run()
 
 if __name__ == "__main__":
-    # python run_server.py --host 0.0.0.0 --port 8000
+    # python map_server.py --host 0.0.0.0 --port 8000
     main()
