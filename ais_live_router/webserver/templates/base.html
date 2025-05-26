@@ -17,10 +17,9 @@
 <body>
     <nav>
         <div class="nav-container">
-            <a href="/" class="logo">Datakeeper</a>
+            <a href="/" class="logo">Viz</a>
             <ul class="nav-menu">
-                <li><a href="/">Home</a></li>
-                <li><a href="/">Policy</a></li>
+                <li><a href="/"></a></li>
             </ul>
         </div>
     </nav>
@@ -30,11 +29,7 @@
             {% block content %}{% endblock %}
         </div>
     </main>
-    <!--
-        <footer>
-            &copy; 2025 SiteName. All rights reserved.
-        </footer>
-    -->
+
     {% block extra_post_js %}{% endblock %}
     <!-- Global state -->
     <script>
@@ -47,12 +42,6 @@
           });
         });
     </script>
-    <!--
-        <div x-data>
-        <button @click="$store.darkMode.toggle()">Toggle Dark Mode</button>
-        <p x-text="$store.darkMode.on ? 'Dark Mode' : 'Light Mode'"></p>
-        </div>
-    -->
 </body>
 </html>
 
