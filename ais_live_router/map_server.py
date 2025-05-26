@@ -1,13 +1,20 @@
-import argparse
+import os
 import uvicorn
-from ais_live_router.webserver.main import app
+import argparse
 
-def main():
+
+def cli():
     parser = argparse.ArgumentParser(description="Run the AIS Live Router web server.")
     parser.add_argument(
         "--host",
         type=str,
         default="localhost",
+        help="Host address to bind the server to (default: localhost)",
+    )
+    parser.add_argument(
+        "--data-type",
+        type=str,
+        default="simulation",
         help="Host address to bind the server to (default: localhost)",
     )
     parser.add_argument(
@@ -18,6 +25,14 @@ def main():
     )
 
     args = parser.parse_args()
+    os.environ["data_type"] = args.data_type
+    return args
+
+def main():
+    args = cli()
+    from ais_live_router.webserver.main import app
+    # print(f"data_type={data_type}")
+    # print(f"data_source={os.environ.get('data_type', 'mongodb')}")
 
     config = uvicorn.Config(
         app=app,

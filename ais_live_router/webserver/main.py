@@ -46,7 +46,7 @@ app = FastAPI(
     title="DataKeeper API", description="Management API for DataKeeper Policy System",
     lifespan=lifespan
 )
-ais_data = DataIngestion(data_source='mongodb')
+ais_data = DataIngestion(data_source=os.environ.get("data_type", 'mongodb'))
 
 # Add CORS middleware
 app.add_middleware(
