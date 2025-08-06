@@ -45,5 +45,6 @@ def main():
     server.run()
 
 if __name__ == "__main__":
+    # pip install numpy uvicorn fastapi pymongo confluent-kafka Jinja2
     # python map_server.py --host 0.0.0.0 --port 8000
     main()
